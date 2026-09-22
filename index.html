@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>沈阳旅行地图</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
+  <style>
+    :root { color-scheme: light; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; }
+    body { margin: 0; background: #f5f7fa; color: #1f2937; }
+    header { padding: 16px 20px 10px; background: #fff; border-bottom: 1px solid #dfe5ec; }
+    h1 { margin: 0 0 4px; font-size: 22px; }
+    .sub { color: #64748b; font-size: 13px; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 330px; height: calc(100vh - 76px); min-height: 620px; }
+    #map { min-height: 620px; }
+    aside { overflow: auto; background: #fff; border-left: 1px solid #dfe5ec; padding: 14px; }
+    .filters { display: grid; gap: 8px; margin-bottom: 14px; }
+    label { display:flex; gap:8px; align-items:center; font-size: 13px; }
+    input { accent-color: #2563eb; }
+    .legend { display:flex; flex-wrap:wrap; gap:7px 12px; padding-bottom: 12px; border-bottom:1px solid #e5e7eb; }
+    .swatch { width: 10px; height: 10px; border-radius:50%; display:inline-block; margin-right:4px; }
+    .item { padding: 10px 0; border-bottom:1px solid #eef2f7; cursor:pointer; }
+    .item:hover { background:#f8fafc; }
+    .item strong { display:block; font-size:14px; }
+    .item small { color:#64748b; line-height:1.45; }
+    .leaflet-popup-content { margin: 12px 14px; line-height: 1.5; }
+    .popup-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
+    .popup-meta { color:#64748b; font-size:12px; margin-bottom: 5px; }
+    .note { margin-top: 12px; color:#64748b; font-size:12px; line-height:1.5; }
+    .map-bg { fill:#f4f1e7; }
+    .road { fill:none; stroke:#d68b72; stroke-width:2.2; opacity:.78; }
+    .road:nth-of-type(2n) { stroke:#e4ad91; stroke-width:1.3; }
+    .river { fill:none; stroke:#79b9d1; stroke-width:13; opacity:.78; stroke-linecap:round; }
+    .park { fill:#cfe2b9; stroke:#a9c895; stroke-width:1; opacity:.9; }
+    .place-label { fill:#6b6259; font-size:18px; font-family:"Microsoft YaHei",sans-serif; font-weight:500; opacity:.82; }
+    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; height:auto; } #map { height: 62vh; min-height: 460px; } aside { border-left:0; border-top:1px solid #dfe5ec; } }
+  </style>
+</head>
+<body>
+  <header><h1>沈阳旅行地图</h1><div class="sub">按类别筛选值得去、值得玩、值得吃的地点；点地图标记可看推荐理由。</div></header>
+  <div class="layout">
+    <div id="map" aria-label="沈阳旅行地点地图"></div>
+    <aside>
+      <div class="legend" id="legend"></div>
+      <div class="filters" id="filters"></div>
+      <div id="list"></div>
+      <div class="note">目前已整理 47 个标记。图片是地点或类别的代表性配图，餐饮标记以老字号、代表性街区和常见特色为主；国庆前请再确认营业、排队和搬迁情况。景点开放、预约和票价以官方公告为准。</div>
+    </aside>
+  </div>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
+  <script>
+    const categories = {
+      history: {name:'历史文化', color:'#b45309', img:'https://images.unsplash.com/photo-1548013146-72479768bada?w=900'},
+      museum: {name:'博物馆', color:'#7c3aed', img:'https://images.unsplash.com/photo-1564399579883-451a5d44ec08?w=900'},
+      nature: {name:'公园自然', color:'#15803d', img:'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=900'},
+      district: {name:'街区夜游', color:'#0369a1', img:'https://images.unsplash.com/photo-1519501025264-65ba15a82390?w=900'},
+      food: {name:'特色餐饮', color:'#dc2626', img:'https://images.unsplash.com/photo-1552566626-52f8b828add9?w=900'}
+    };
+    const places = [
+      {n:'沈阳故宫',c:'history',lat:41.7967,lng:123.4495,t:'清前期宫殿建筑群；与张学良旧居、中街适合连线。'},
+      {n:'张学良旧居（大帅府）',c:'history',lat:41.7926,lng:123.4580,t:'民国历史建筑群；建议和沈阳故宫同日步行游。'},
+      {n:'清福陵（东陵）',c:'history',lat:41.7763,lng:123.5309,t:'清代皇家陵寝；秋季园林和古树值得看。'},
+      {n:'新乐遗址博物馆',c:'history',lat:41.8537,lng:123.4020,t:'沈阳新石器时代遗址，适合喜欢考古和城市源流的人。'},
+      {n:'“九一八”历史博物馆',c:'museum',lat:41.8362,lng:123.4668,t:'近现代历史主题博物馆；国庆预约和开放时间需提前确认。'},
+      {n:'辽宁省博物馆',c:'museum',lat:41.7108,lng:123.4314,t:'辽宁重要综合博物馆，书画、文物展陈较强。'},
+      {n:'辽宁省科技馆',c:'museum',lat:41.7094,lng:123.4300,t:'互动科技展，适合亲子或想安排轻松半天。'},
+      {n:'沈阳博物馆',c:'museum',lat:41.7971,lng:123.4317,t:'了解沈阳城市史，可与市府广场、老城线路组合。'},
+      {n:'抗美援朝烈士陵园',c:'museum',lat:41.7706,lng:123.4453,t:'纪念性场馆，适合与近现代历史线路组合。'},
+      {n:'北陵公园（昭陵）',c:'nature',lat:41.8285,lng:123.4210,t:'皇家陵寝与大面积绿地；适合半天慢逛。'},
+      {n:'棋盘山风景区',c:'nature',lat:41.9605,lng:123.6870,t:'沈阳近郊山水线；秋天适合自驾，节假日留意拥堵。'},
+      {n:'沈阳国家森林公园',c:'nature',lat:42.0200,lng:123.7500,t:'郊区森林和登山路线，适合安排整天。'},
+      {n:'沈阳世博园',c:'nature',lat:41.9490,lng:123.6670,t:'园林、花卉和步行空间，适合不想爬山的一天。'},
+      {n:'沈阳森林动物园',c:'nature',lat:41.9620,lng:123.6930,t:'亲子和动物主题，通常需要预留半天以上。'},
+      {n:'南湖公园',c:'nature',lat:41.7700,lng:123.4050,t:'市区内轻松散步点，适合晚饭前后。'},
+      {n:'浑河沿岸 / 五里河公园',c:'nature',lat:41.7520,lng:123.4450,t:'城市滨水景观，傍晚散步和看夜景较合适。'},
+      {n:'中街步行街',c:'district',lat:41.7978,lng:123.4490,t:'沈阳最核心的老城商业街，适合与故宫、大帅府连线。'},
+      {n:'西塔街',c:'district',lat:41.8024,lng:123.4075,t:'朝鲜族餐饮和夜生活集中区域。'},
+      {n:'太原街',c:'district',lat:41.7903,lng:123.3980,t:'老牌商业街，适合晚餐、购物和城市观察。'},
+      {n:'市府广场—青年大街',c:'district',lat:41.8045,lng:123.4290,t:'现代城市中轴，商场、咖啡和夜景集中。'},
+      {n:'老边饺子（中街一带）',c:'food',lat:41.7970,lng:123.4490,t:'沈阳代表性老字号，主打饺子；以实际门店和排队情况为准。'},
+      {n:'马家烧麦（老城一带）',c:'food',lat:41.7977,lng:123.4510,t:'沈阳传统清真小吃，适合与中街老城线同日安排。'},
+      {n:'李连贵熏肉大饼',c:'food',lat:41.7970,lng:123.4520,t:'东北传统风味，适合作为早餐或简餐。'},
+      {n:'西塔朝鲜族美食',c:'food',lat:41.8020,lng:123.4070,t:'冷面、烤肉、拌菜等集中；热门店国庆可能排队。'},
+      {n:'老四季鸡架（代表性店）',c:'food',lat:41.7900,lng:123.4300,t:'沈阳本地日常小吃代表，鸡架、抻面等。'},
+      {n:'不老林糖 / 东北伴手礼',c:'food',lat:41.7970,lng:123.4490,t:'可在老城商圈购买沈阳特色糖果和伴手礼。'}
+      ,{n:'沈阳北塔护国法轮寺',c:'history',lat:41.8305,lng:123.4305,t:'清代盛京城北重要古建筑，适合与北陵、九一八线组合。'}
+      ,{n:'实胜寺（皇寺）',c:'history',lat:41.8058,lng:123.4253,t:'沈阳老城历史寺院，建筑和城市记忆兼具。'}
+      ,{n:'沈阳南关天主教堂',c:'history',lat:41.7840,lng:123.4520,t:'近代建筑与城市街区拍照点。'}
+      ,{n:'沈阳“1905”文化创意园',c:'district',lat:41.8068,lng:123.3724,t:'老铁路厂房改造的文创与餐饮空间。'}
+      ,{n:'老北市',c:'district',lat:41.8107,lng:123.4225,t:'传统民俗、演艺和夜游街区，节假日氛围较浓。'}
+      ,{n:'沈阳奥体中心',c:'district',lat:41.7435,lng:123.4312,t:'浑南城市地标，适合看夜景或安排演出赛事。'}
+      ,{n:'K11购物艺术中心',c:'district',lat:41.7445,lng:123.4285,t:'现代商业、展览和餐饮，适合雨天或晚间。'}
+      ,{n:'沈阳植物园',c:'nature',lat:41.9440,lng:123.6675,t:'花卉、园林和步行空间，适合半天到一天。'}
+      ,{n:'关东影视城',c:'nature',lat:41.9660,lng:123.6840,t:'民国街景主题园区，可与棋盘山同日安排。'}
+      ,{n:'沈阳怪坡风景区',c:'nature',lat:42.1040,lng:123.7780,t:'沈阳近郊特色地貌和民俗景区，适合自驾一日线。'}
+      ,{n:'沈阳水洞',c:'nature',lat:41.9680,lng:123.8770,t:'喀斯特溶洞与郊野景观，需预留往返车程。'}
+      ,{n:'沈阳铁路陈列馆',c:'museum',lat:41.7995,lng:123.3705,t:'铁路工业与城市交通史主题展馆。'}
+      ,{n:'沈阳蒸汽机车博物馆',c:'museum',lat:41.6380,lng:123.3330,t:'老式机车和铁路文化，适合铁路爱好者。'}
+      ,{n:'沈阳航空博物馆',c:'museum',lat:41.9580,lng:123.4460,t:'航空主题展陈，开放安排需提前核实。'}
+      ,{n:'沈阳奥林匹克公园',c:'nature',lat:41.7440,lng:123.4320,t:'浑南滨水步行和夜景空间。'}
+      ,{n:'南塔公园',c:'nature',lat:41.7740,lng:123.4620,t:'市区休闲公园，附近可顺路安排南塔街区。'}
+      ,{n:'沈阳烧烤（太原街/西塔一带）',c:'food',lat:41.7910,lng:123.4050,t:'东北烧烤、烤串和锅包肉是沈阳夜宵重点。'}
+      ,{n:'沈阳冷面（西塔）',c:'food',lat:41.8020,lng:123.4060,t:'朝鲜族冷面、烤肉和拌菜集中区域。'}
+      ,{n:'沈阳鸡架（老四季一带）',c:'food',lat:41.7900,lng:123.4300,t:'本地日常小吃代表，适合午餐或夜宵。'}
+      ,{n:'东北菜（中街/老北市）',c:'food',lat:41.8070,lng:123.4230,t:'锅包肉、溜肉段、地三鲜、酸菜白肉等东北菜集中。'}
+      ,{n:'沈阳早市（小河沿早市）',c:'food',lat:41.7870,lng:123.4720,t:'适合体验本地早餐和小吃；营业时间及摊位会变化。'}
+    ];
+    const map = new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[123.47,41.805],zoom:9.8,attributionControl:true});
+    map.addControl(new maplibregl.NavigationControl(),'top-left');
+    const layers = {}, markers = {};
+    Object.keys(categories).forEach(k=>layers[k]=[]);
+    const details={
+      '沈阳故宫':{price:'成人票常见为 50 元左右；以国庆当期公告为准',book:'通过“沈阳故宫博物院”官方公众号/官网或授权平台实名预约，按预约时段入馆'},
+      '张学良旧居（大帅府）':{price:'票价以景区当期公告为准',book:'建议通过官方公众号或授权票务平台预约'},
+      '“九一八”历史博物馆':{price:'通常免费，可能需要实名预约',book:'通过场馆官方渠道或官方公众号预约，携带有效证件'},
+      '辽宁省博物馆':{price:'通常免费，特展可能另收费',book:'通过辽宁省博物馆官方公众号预约入馆'},
+      '辽宁省科技馆':{price:'通常免费，部分活动可能收费',book:'通过辽宁省科技馆官方公众号预约'},
+      '北陵公园（昭陵）':{price:'公园及昭陵区域按当期公告购票',book:'一般无需分时预约，节假日先核实开放安排'},
+      '棋盘山风景区':{price:'景区各项目分别计费',book:'通过景区官方渠道确认门票、停车和项目预约'},
+      '沈阳世博园':{price:'票价随季节和活动调整',book:'通过沈阳世博园官方渠道或授权平台购票'},
+      '沈阳森林动物园':{price:'票价以景区当期公告为准',book:'建议通过官方渠道提前购票'},
+      '清福陵（东陵）':{price:'与盛京三陵相关联票/单票政策以当期公告为准',book:'出发前确认开放和购票方式'}
+    };
+    places.forEach((p,i)=>{
+      const cat=categories[p.c];
+      const d=details[p.n]||{};
+      const image=p.img||cat.img;
+      const price=p.price||d.price;
+      const book=p.book||d.book;
+      const extra=(price||book)?`<div style="margin-top:6px">${price?`<b>门票：</b>${price}<br>`:''}${book?`<b>预约：</b>${book}`:''}</div>`:'';
+      const popupHtml=`<div class="popup-title">${p.n}</div><img src="${image}" alt="${p.n}代表性图片" style="width:100%;max-height:150px;object-fit:cover;border-radius:4px;margin:5px 0"><div class="popup-meta">${cat.name}</div><div>${p.t}</div>${extra}`;
+      const m=new maplibregl.Marker({color:cat.color}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);
+      layers[p.c].push(m); markers[i]=m; p.i=i;
+    });
+    const legend=document.getElementById('legend');
+    const filters=document.getElementById('filters');
+    Object.entries(categories).forEach(([k,v])=>{
+      legend.insertAdjacentHTML('beforeend',`<span style="font-size:12px"><i class="swatch" style="background:${v.color}"></i>${v.name}</span>`);
+      filters.insertAdjacentHTML('beforeend',`<label><input type="checkbox" checked data-cat="${k}"> 显示${v.name}</label>`);
+    });
+    function renderList(){
+      const visible=Object.fromEntries(Object.entries(categories).map(([k])=>[k,document.querySelector(`[data-cat="${k}"]`).checked]));
+      document.getElementById('list').innerHTML=places.filter(p=>visible[p.c]).map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name} · ${p.t}</small></div>`).join('');
+      document.querySelectorAll('.item').forEach(el=>el.addEventListener('click',()=>{const p=places[el.dataset.index];map.flyTo([p.lng,p.lat],14);markers[p.i].togglePopup();}));
+    }
+    document.querySelectorAll('[data-cat]').forEach(cb=>cb.addEventListener('change',()=>{const k=cb.dataset.cat; layers[k].forEach(m=>m.getElement().style.display=cb.checked?'':'none'); renderList();}));
+    renderList();
+  </script>
+</body>
+</html>
