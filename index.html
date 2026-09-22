@@ -183,9 +183,16 @@
     });
     const distanceKm=(a,b)=>{const r=6371, dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;const q=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return 2*r*Math.asin(Math.sqrt(q));};
     const isVisible=p=>selected[p.c]&&(!nearbyOnly||(userPosition&&distanceKm(userPosition,p)<=5));
+    const categoryOrder=Object.keys(categories);
+    const sortedVisiblePlaces=()=>places.filter(isVisible).sort((a,b)=>{
+      const categoryDiff=categoryOrder.indexOf(a.c)-categoryOrder.indexOf(b.c);
+      if(categoryDiff!==0)return categoryDiff;
+      if(!userPosition)return a.i-b.i;
+      return distanceKm(userPosition,a)-distanceKm(userPosition,b);
+    });
     function applyVisibility(){places.forEach(p=>markers[p.i].getElement().style.display=isVisible(p)?'':'none');renderList();}
     function renderList(){
-      const rows=places.filter(isVisible).map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name}${userPosition?` · ${distanceKm(userPosition,p).toFixed(1)} km`:''} · ${p.t}</small></div>`).join('');
+      const rows=sortedVisiblePlaces().map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name}${userPosition?` · ${distanceKm(userPosition,p).toFixed(1)} km`:''} · ${p.t}</small></div>`).join('');
       document.getElementById('list').innerHTML=rows;
       document.getElementById('mobile-list').innerHTML=rows||'<div class="note">当前条件下没有地点。</div>';
       document.querySelectorAll('.item').forEach(el=>el.addEventListener('click',()=>{const p=places[el.dataset.index];map.flyTo({center:[p.lng,p.lat],zoom:14});markers[p.i].togglePopup();closeSheet();}));
