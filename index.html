@@ -7,7 +7,7 @@
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
   <style>
     :root { color-scheme: light; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; }
-    body { margin: 0; background: #f5f7fa; color: #1f2937; }
+    body { margin: 0; background: #f5f7fa; color: #1f2937; overflow: hidden; }
     header { padding: 16px 20px 10px; background: #fff; border-bottom: 1px solid #dfe5ec; }
     h1 { margin: 0 0 4px; font-size: 22px; }
     .sub { color: #64748b; font-size: 13px; }
@@ -15,7 +15,7 @@
     #map { min-height: 620px; }
     aside { overflow: auto; background: #fff; border-left: 1px solid #dfe5ec; padding: 14px; }
     .filters { display: grid; gap: 8px; margin-bottom: 14px; }
-    label { display:flex; gap:8px; align-items:center; font-size: 13px; }
+    label { display:flex; gap:10px; align-items:center; font-size: 14px; min-height:44px; }
     input { accent-color: #2563eb; }
     .legend { display:flex; flex-wrap:wrap; gap:7px 12px; padding-bottom: 12px; border-bottom:1px solid #e5e7eb; }
     .swatch { width: 10px; height: 10px; border-radius:50%; display:inline-block; margin-right:4px; }
@@ -23,7 +23,7 @@
     .item:hover { background:#f8fafc; }
     .item strong { display:block; font-size:14px; }
     .item small { color:#64748b; line-height:1.45; }
-    .leaflet-popup-content { margin: 12px 14px; line-height: 1.5; }
+    .maplibregl-popup-content { padding: 12px 14px; line-height: 1.5; border-radius:8px; }
     .popup-title { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
     .popup-meta { color:#64748b; font-size:12px; margin-bottom: 5px; }
     .note { margin-top: 12px; color:#64748b; font-size:12px; line-height:1.5; }
@@ -33,7 +33,32 @@
     .river { fill:none; stroke:#79b9d1; stroke-width:13; opacity:.78; stroke-linecap:round; }
     .park { fill:#cfe2b9; stroke:#a9c895; stroke-width:1; opacity:.9; }
     .place-label { fill:#6b6259; font-size:18px; font-family:"Microsoft YaHei",sans-serif; font-weight:500; opacity:.82; }
-    @media (max-width: 760px) { .layout { grid-template-columns: 1fr; height:auto; } #map { height: 62vh; min-height: 460px; } aside { border-left:0; border-top:1px solid #dfe5ec; } }
+    .mobile-tools,.mobile-sheet,.sheet-backdrop,.location-status { display:none; }
+    .navigate-link { display:inline-block; margin-top:8px; padding:8px 10px; background:#1f65c1; color:#fff; border-radius:6px; text-decoration:none; }
+    @media (max-width: 760px) {
+      header,aside { display:none; }
+      .layout { display:block; height:100dvh; min-height:0; }
+      #map { height:100dvh; min-height:0; }
+      .mobile-tools { display:grid; grid-template-columns:repeat(3,1fr); position:fixed; z-index:12; left:10px; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); background:#fffffff2; border:1px solid #dce3ec; border-radius:16px; padding:7px; box-shadow:0 5px 22px #17203335; backdrop-filter:blur(12px); }
+      .mobile-tools button { border:0; background:transparent; min-height:48px; border-radius:10px; color:#334155; font-size:14px; }
+      .mobile-tools button.is-active { background:#1f65c1; color:#fff; }
+      .mobile-sheet { display:block; position:fixed; z-index:14; left:0; right:0; bottom:0; max-height:72dvh; overflow:auto; background:#fff; border-radius:18px 18px 0 0; padding:12px 16px calc(18px + env(safe-area-inset-bottom)); transform:translateY(110%); transition:transform .2s ease; box-shadow:0 -8px 30px #17203330; }
+      .mobile-sheet.open { transform:translateY(0); }
+      .sheet-backdrop { position:fixed; inset:0; z-index:13; background:#11182755; }
+      .sheet-backdrop.open { display:block; }
+      .sheet-handle { width:40px; height:4px; border-radius:4px; background:#cbd5e1; margin:0 auto 12px; }
+      .sheet-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+      .sheet-head strong { font-size:17px; }
+      .sheet-head button { border:0; background:#eef2f7; width:40px; height:40px; border-radius:50%; font-size:19px; }
+      .mobile-filter { display:grid; grid-template-columns:1fr 1fr; gap:9px; }
+      .mobile-filter label { border:1px solid #dbe2ea; border-radius:10px; padding:7px 10px; min-height:50px; }
+      .mobile-list { margin-top:12px; }
+      .mobile-list .item { padding:12px 2px; }
+      .location-status { position:fixed; display:block; z-index:11; top:10px; left:10px; right:10px; background:#fffffff2; border-radius:12px; padding:10px 12px; box-shadow:0 3px 14px #17203325; font-size:13px; pointer-events:none; }
+      .location-status:empty { display:none; }
+      .maplibregl-ctrl-top-left { top:50px; }
+      .maplibregl-popup-content { max-width:280px; }
+    }
   </style>
 </head>
 <body>
@@ -47,6 +72,19 @@
       <div class="note">目前已整理 47 个标记。图片是地点或类别的代表性配图，餐饮标记以老字号、代表性街区和常见特色为主；国庆前请再确认营业、排队和搬迁情况。景点开放、预约和票价以官方公告为准。</div>
     </aside>
   </div>
+  <div class="location-status" id="location-status" aria-live="polite"></div>
+  <nav class="mobile-tools" aria-label="地图工具">
+    <button type="button" id="locate-btn">⌖ 我的位置</button>
+    <button type="button" id="nearby-btn">◎ 附近</button>
+    <button type="button" id="filter-btn">☷ 分类</button>
+  </nav>
+  <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  <section class="mobile-sheet" id="mobile-sheet" aria-label="分类和地点筛选">
+    <div class="sheet-handle"></div>
+    <div class="sheet-head"><strong>分类筛选</strong><button type="button" id="sheet-close" aria-label="关闭">×</button></div>
+    <div class="mobile-filter" id="mobile-filter"></div>
+    <div class="mobile-list" id="mobile-list"></div>
+  </section>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
   <script>
     const categories = {
@@ -121,6 +159,8 @@
       '沈阳森林动物园':{price:'票价以景区当期公告为准',book:'建议通过官方渠道提前购票'},
       '清福陵（东陵）':{price:'与盛京三陵相关联票/单票政策以当期公告为准',book:'出发前确认开放和购票方式'}
     };
+    let userPosition=null, nearbyOnly=false, userMarker=null;
+    const selected=Object.fromEntries(Object.keys(categories).map(k=>[k,true]));
     places.forEach((p,i)=>{
       const cat=categories[p.c];
       const d=details[p.n]||{};
@@ -128,22 +168,52 @@
       const price=p.price||d.price;
       const book=p.book||d.book;
       const extra=(price||book)?`<div style="margin-top:6px">${price?`<b>门票：</b>${price}<br>`:''}${book?`<b>预约：</b>${book}`:''}</div>`:'';
-      const popupHtml=`<div class="popup-title">${p.n}</div><img src="${image}" alt="${p.n}代表性图片" style="width:100%;max-height:150px;object-fit:cover;border-radius:4px;margin:5px 0"><div class="popup-meta">${cat.name}</div><div>${p.t}</div>${extra}`;
+      const nav=`https://uri.amap.com/marker?position=${p.lng},${p.lat}&name=${encodeURIComponent(p.n)}&callnative=1`;
+      const popupHtml=`<div class="popup-title">${p.n}</div><img src="${image}" alt="${p.n}代表性图片" style="width:100%;max-height:150px;object-fit:cover;border-radius:4px;margin:5px 0"><div class="popup-meta">${cat.name}</div><div>${p.t}</div>${extra}<a class="navigate-link" href="${nav}" target="_blank" rel="noopener">在地图中导航</a>`;
       const m=new maplibregl.Marker({color:cat.color}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);
       layers[p.c].push(m); markers[i]=m; p.i=i;
     });
     const legend=document.getElementById('legend');
     const filters=document.getElementById('filters');
+    const mobileFilter=document.getElementById('mobile-filter');
     Object.entries(categories).forEach(([k,v])=>{
       legend.insertAdjacentHTML('beforeend',`<span style="font-size:12px"><i class="swatch" style="background:${v.color}"></i>${v.name}</span>`);
       filters.insertAdjacentHTML('beforeend',`<label><input type="checkbox" checked data-cat="${k}"> 显示${v.name}</label>`);
+      mobileFilter.insertAdjacentHTML('beforeend',`<label><input type="checkbox" checked data-mobile-cat="${k}"><span><i class="swatch" style="background:${v.color}"></i>${v.name}</span></label>`);
     });
+    const distanceKm=(a,b)=>{const r=6371, dLat=(b.lat-a.lat)*Math.PI/180,dLng=(b.lng-a.lng)*Math.PI/180;const q=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLng/2)**2;return 2*r*Math.asin(Math.sqrt(q));};
+    const isVisible=p=>selected[p.c]&&(!nearbyOnly||(userPosition&&distanceKm(userPosition,p)<=5));
+    function applyVisibility(){places.forEach(p=>markers[p.i].getElement().style.display=isVisible(p)?'':'none');renderList();}
     function renderList(){
-      const visible=Object.fromEntries(Object.entries(categories).map(([k])=>[k,document.querySelector(`[data-cat="${k}"]`).checked]));
-      document.getElementById('list').innerHTML=places.filter(p=>visible[p.c]).map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name} · ${p.t}</small></div>`).join('');
-      document.querySelectorAll('.item').forEach(el=>el.addEventListener('click',()=>{const p=places[el.dataset.index];map.flyTo([p.lng,p.lat],14);markers[p.i].togglePopup();}));
+      const rows=places.filter(isVisible).map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name}${userPosition?` · ${distanceKm(userPosition,p).toFixed(1)} km`:''} · ${p.t}</small></div>`).join('');
+      document.getElementById('list').innerHTML=rows;
+      document.getElementById('mobile-list').innerHTML=rows||'<div class="note">当前条件下没有地点。</div>';
+      document.querySelectorAll('.item').forEach(el=>el.addEventListener('click',()=>{const p=places[el.dataset.index];map.flyTo({center:[p.lng,p.lat],zoom:14});markers[p.i].togglePopup();closeSheet();}));
     }
-    document.querySelectorAll('[data-cat]').forEach(cb=>cb.addEventListener('change',()=>{const k=cb.dataset.cat; layers[k].forEach(m=>m.getElement().style.display=cb.checked?'':'none'); renderList();}));
+    function setCategory(k,on){selected[k]=on;document.querySelectorAll(`[data-cat="${k}"],[data-mobile-cat="${k}"]`).forEach(x=>x.checked=on);applyVisibility();}
+    document.querySelectorAll('[data-cat]').forEach(cb=>cb.addEventListener('change',()=>setCategory(cb.dataset.cat,cb.checked)));
+    document.querySelectorAll('[data-mobile-cat]').forEach(cb=>cb.addEventListener('change',()=>setCategory(cb.dataset.mobileCat,cb.checked)));
+    const sheet=document.getElementById('mobile-sheet'),backdrop=document.getElementById('sheet-backdrop');
+    function openSheet(){sheet.classList.add('open');backdrop.classList.add('open');}
+    function closeSheet(){sheet.classList.remove('open');backdrop.classList.remove('open');}
+    document.getElementById('filter-btn').addEventListener('click',openSheet);
+    document.getElementById('sheet-close').addEventListener('click',closeSheet);
+    backdrop.addEventListener('click',closeSheet);
+    function setStatus(message){const el=document.getElementById('location-status');el.textContent=message; if(message)setTimeout(()=>{if(el.textContent===message)el.textContent='';},5000);}
+    function locate(){
+      if(!navigator.geolocation){setStatus('当前浏览器不支持定位');return;}
+      setStatus('正在获取当前位置…');
+      navigator.geolocation.getCurrentPosition(pos=>{
+        userPosition={lng:pos.coords.longitude,lat:pos.coords.latitude,accuracy:pos.coords.accuracy};
+        if(userMarker)userMarker.remove();
+        const dot=document.createElement('div');dot.style.cssText='width:18px;height:18px;border:4px solid white;border-radius:50%;background:#1677ff;box-shadow:0 0 0 5px #1677ff44';
+        userMarker=new maplibregl.Marker({element:dot}).setLngLat([userPosition.lng,userPosition.lat]).addTo(map);
+        map.flyTo({center:[userPosition.lng,userPosition.lat],zoom:13});
+        setStatus(`定位成功，精度约 ${Math.round(userPosition.accuracy)} 米`);applyVisibility();
+      },err=>{const msg=err.code===1?'定位权限被拒绝，请在浏览器设置中允许位置访问':'暂时无法获取位置，请检查 GPS 和网络';setStatus(msg);},{enableHighAccuracy:true,timeout:12000,maximumAge:30000});
+    }
+    document.getElementById('locate-btn').addEventListener('click',locate);
+    document.getElementById('nearby-btn').addEventListener('click',()=>{if(!userPosition){setStatus('请先点击“我的位置”完成定位');return;}nearbyOnly=!nearbyOnly;document.getElementById('nearby-btn').classList.toggle('is-active',nearbyOnly);applyVisibility();setStatus(nearbyOnly?'只显示当前位置 5 公里内地点':'已显示全部已选分类地点');});
     renderList();
   </script>
 </body>
