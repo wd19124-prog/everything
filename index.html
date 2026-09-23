@@ -59,9 +59,31 @@
       .maplibregl-ctrl-top-left { top:50px; }
       .maplibregl-popup-content { max-width:280px; }
     }
+    .app-view{display:none;position:fixed;inset:0;z-index:20;background:#fbfbfc;color:#20212a;overflow:auto;padding:28px 18px 110px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif}
+    .app-view.active{display:block}
+    .app-inner{max-width:760px;margin:0 auto}
+    .app-eyebrow{font-size:13px;color:#5d55a6;font-weight:700}
+    .app-title{font-size:30px;line-height:1.15;margin:7px 0;color:#20212a}
+    .app-sub{font-size:14px;color:#767987}
+    .route-summary{display:flex;justify-content:space-between;align-items:center;margin:20px 0 16px;padding:16px 18px;border-radius:20px;background:#eeedfb;color:#57556b;font-size:14px}
+    .day-picker{display:flex;gap:9px;overflow:auto;padding:2px 0 7px;margin-bottom:20px}
+    .day-picker button{flex:0 0 82px;padding:12px 7px 14px;border:1px solid #e7e8ed;border-radius:16px;background:#fff;color:#20212a;font:inherit;cursor:pointer}
+    .day-picker button b{display:block;font-size:22px;margin:7px 0}.day-picker button small{color:#767987;font-size:12px}.day-picker button.active{background:#ddd8f2;border-color:#d3caed;color:#403b7f}.day-picker button.active small{color:#5d55a6}
+    .timeline{position:relative;margin-top:18px}.timeline:before{content:"";position:absolute;left:52px;top:16px;bottom:18px;width:2px;background:#d9d7ee}.timeline-row{position:relative;display:grid;grid-template-columns:48px 1fr;gap:16px;margin-bottom:16px}.timeline-row time{font-size:13px;font-weight:700;color:#5d55a6;padding-top:16px}.timeline-dot{position:absolute;left:47px;top:19px;width:12px;height:12px;border-radius:50%;background:#5d55a6;box-shadow:0 0 0 4px #fbfbfc}.app-card{margin:0;padding:16px;border:1px solid #e7e8ed;border-radius:19px;background:#fff;box-shadow:0 5px 16px #25283a09;cursor:pointer}.app-card h3{margin:0 0 7px;font-size:17px}.app-meta{color:#767987;font-size:13px;line-height:1.6}.app-card.highlight{background:#eeedfb;border-color:#d8d2f0}.app-note{margin:12px 0;padding:12px 14px;border-radius:14px;background:#eeedfb;color:#57556b;font-size:13px;line-height:1.6}
+    .detail-head{margin:-28px -18px 18px;padding:18px;background:#eeedfb;border-bottom:1px solid #dedaf4}.back-button{border:0;background:transparent;padding:0;color:#403b7f;font-weight:700;font-size:13px;cursor:pointer}.detail-head h2{font-size:28px;margin:22px 0 5px}.app-button{display:block;width:100%;border:0;border-radius:14px;background:#5d55a6;color:#fff;padding:13px;text-align:center;font:inherit;font-weight:700;text-decoration:none;cursor:pointer}.detail-card{margin:14px 0;padding:17px;border:1px solid #e7e8ed;border-radius:20px;background:#fff;box-shadow:0 5px 16px #25283a09}.detail-card h3{margin:0 0 9px;font-size:18px}.detail-card p{margin:0;color:#767987;font-size:13px;line-height:1.65}.detail-note{margin:12px 0;padding:12px 14px;border-radius:14px;background:#eeedfb;color:#57556b;font-size:13px;line-height:1.6}
+    .discover-view{padding:0;overflow:hidden;background:transparent;pointer-events:none}.discover-view.active{display:block}.discover-controls{position:absolute;z-index:2;left:18px;right:18px;top:18px;pointer-events:auto;background:#fffffff2;border-radius:18px;padding:15px;box-shadow:0 5px 20px #25283a20}.discover-controls h2{margin:0 0 5px;font-size:23px}.discover-controls p{margin:0;color:#767987;font-size:13px}.discover-filters{display:flex;gap:7px;overflow:auto;margin-top:12px}.discover-filters button{border:1px solid #e7e8ed;border-radius:999px;background:#fff;color:#767987;padding:8px 11px;white-space:nowrap;font:inherit;font-size:12px;cursor:pointer}.discover-filters button.active{background:#5d55a6;color:#fff;border-color:#5d55a6}.discover-sheet{position:absolute;z-index:2;left:0;right:0;bottom:76px;max-height:42vh;overflow:auto;border-radius:22px 22px 0 0;background:#fbfbfc;padding:17px 18px;pointer-events:auto;box-shadow:0 -8px 25px #25283a20}.discover-sheet h3{margin:0 0 10px;font-size:18px}.discover-row{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid #e7e8ed;cursor:pointer}.discover-row .swatch{width:10px;height:10px;border-radius:50%;background:#5d55a6;margin-top:5px;flex:none}.discover-row strong{display:block;font-size:15px}.discover-row small{color:#767987;line-height:1.5}
+    .bottom-nav{position:fixed;z-index:30;left:18px;right:18px;bottom:calc(10px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,1fr);padding:9px 8px 10px;border:1px solid #e7e8ed;border-radius:22px;background:#fffffff2;box-shadow:0 8px 28px #25283a24;backdrop-filter:blur(12px)}.bottom-nav button{border:0;background:transparent;color:#8b8d99;font:inherit;font-size:12px;cursor:pointer}.bottom-nav button span{display:block;margin:auto auto 4px;width:34px;height:28px;border-radius:10px;font-size:20px;line-height:28px}.bottom-nav button.active{color:#403b7f;font-weight:700}.bottom-nav button.active span{background:#eeedfb;color:#5d55a6}
+    body .mobile-tools{display:none}.discover-locate{border:0;border-radius:999px;background:#5d55a6;color:#fff;padding:8px 11px;font:inherit;font-size:12px;cursor:pointer;float:right;margin-top:-5px}
+    @media (min-width:761px){.app-view{padding-bottom:30px}.bottom-nav{left:auto;right:24px;bottom:24px;width:380px}.discover-sheet{left:auto;width:380px;right:24px;bottom:100px;border-radius:22px}.discover-controls{left:24px;right:auto;width:420px;top:24px}}
+    body[data-mode="discover"] header,body[data-mode="discover"] aside{display:none}body[data-mode="discover"] .layout{height:100vh}
   </style>
 </head>
 <body>
+  <section id="next-view" class="app-view active" aria-label="下一项安排"><div class="app-inner" id="next-content"></div></section>
+  <section id="itinerary-view" class="app-view" aria-label="每日行程"><div class="app-inner" id="itinerary-content"></div></section>
+  <section id="detail-view" class="app-view" aria-label="地点详情"><div class="app-inner" id="detail-content"></div></section>
+  <section id="discover-view" class="app-view discover-view" aria-label="发现身边"><div class="discover-controls"><button type="button" class="discover-locate" onclick="locate()">⌖ 定位附近</button><h2>发现身边</h2><p>地图全览 · 找到附近值得去的地方</p><div class="discover-filters" id="discover-filters"></div></div><div class="discover-sheet"><h3>附近地点</h3><div id="discover-list"></div></div></section>
+  <nav class="bottom-nav" aria-label="主导航"><button type="button" data-view="next"><span>⌁</span>下一项安排</button><button type="button" data-view="itinerary"><span>▦</span>行程安排</button><button type="button" data-view="discover"><span>⌖</span>发现身边</button></nav>
   <header><h1>沈阳旅行地图</h1><div class="sub">按类别筛选值得去、值得玩、值得吃的地点；点地图标记可看推荐理由。</div></header>
   <div class="layout">
     <div id="map" aria-label="沈阳旅行地点地图"></div>
@@ -260,6 +282,42 @@
     document.getElementById('nearby-btn').addEventListener('click',()=>{if(!userPosition){setStatus('请先点击“我的位置”完成定位');return;}nearbyOnly=!nearbyOnly;document.getElementById('nearby-btn').classList.toggle('is-active',nearbyOnly);applyVisibility();setStatus(nearbyOnly?'只显示当前位置 5 公里内地点':'已显示全部已选分类地点');});
     document.getElementById('place-count').textContent=places.length;
     renderList();
+    const itinerary=[
+      {date:'10月1日',label:'故宫线',route:'沈阳老城线',stay:'中街 / 东中街',events:[
+        {time:'10:30',name:'沈阳故宫',duration:'预计2.5小时',note:'红墙绿瓦；建议提前预约。'},
+        {time:'14:00',name:'张学良旧居（大帅府）',duration:'预计2小时',note:'中西合璧建筑；与金融博物馆步行衔接。'},
+        {time:'16:00',name:'金融博物馆',duration:'预计1.5小时',note:'货币与金融史；可关注联票。'},
+        {time:'17:30',name:'中街步行街',duration:'晚餐和夜游',note:'老边饺子、马家烧麦、中街冰点城。'}]},
+      {date:'10月2日',label:'北部线',route:'九一八 → 北陵 → 西塔',stay:'北陵 / 北站 / 中街',events:[
+        {time:'09:40',name:'“九一八”历史博物馆',duration:'预计2小时20分钟',note:'近现代历史主题；建议预留安静参观时间。'},
+        {time:'12:30',name:'沈阳北塔护国法轮寺',duration:'预计45分钟',note:'北陵线路上的历史补充点。'},
+        {time:'14:40',name:'北陵公园（昭陵）',duration:'预计3小时',note:'皇家陵寝与古树；白天进入陵寝核心区。'},
+        {time:'18:30',name:'西塔街',duration:'晚餐和夜游',note:'鱼饼汤、师任堂、正谈炸鸡、烤鳗鱼。'}]},
+      {date:'10月3日',label:'洗浴住宿',route:'棋盘山 → 清河半岛',stay:'清河半岛内部',events:[
+        {time:'09:30',name:'棋盘山风景区',duration:'预计3小时',note:'近郊山水；国庆自驾预留拥堵。'},
+        {time:'13:30',name:'沈阳世博园',duration:'预计2.5小时（二选一）',note:'也可改为沈阳森林动物园。'},
+        {time:'17:00',name:'清河半岛',duration:'洗浴 + 住宿一晚',note:'造浪池、温泉、桑拿；提前确认住宿套餐。'}]},
+      {date:'10月4日',label:'博物馆线',route:'辽博 → 辽科馆 → 科学宫',stay:'浑南奥体 / K11',events:[
+        {time:'11:30',name:'辽宁省博物馆',duration:'预计2.5小时',note:'馆藏丰富；重点关注书画和当期展览。'},
+        {time:'15:00',name:'辽宁省科技馆',duration:'预计2小时',note:'VR、球幕和儿童活动可能另收费。'},
+        {time:'17:40',name:'沈阳科学宫',duration:'预计1.5小时',note:'设施更新，靠近三好街。'}]},
+      {date:'10月5日',label:'机动日',route:'市区补逛 / 按离沈时间调整',stay:'不固定',events:[
+        {time:'09:00',name:'沈阳博物馆',duration:'预计1.5小时（可选）',note:'适合补充沈阳城市史。'},
+        {time:'10:30',name:'南湖公园',duration:'预计1.5小时（可选）',note:'散步、拍照，离开时间紧则跳过。'},
+        {time:'12:00',name:'怪坡风景区',duration:'预计3.5小时（晚离沈可选）',note:'可与怪坡虎园组合；早离沈不安排。'}]}
+    ];
+    const placeByName=name=>places.find(p=>p.n===name)||places.find(p=>p.n.includes(name))||null;
+    const currentDay=()=>itinerary.findIndex(x=>x.date===window.selectedDate);
+    window.selectedDate='10月1日';
+    function navButtons(view){const active=view==='detail'?'itinerary':view;document.querySelectorAll('.bottom-nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===active));}
+    function showView(view){document.querySelectorAll('.app-view').forEach(x=>x.classList.remove('active'));document.body.dataset.mode=view;const el=document.getElementById(view+'-view');if(el)el.classList.add('active');navButtons(view);if(view==='discover'){map.resize();renderDiscover('all');}}
+    function renderNext(){const day=itinerary[0],e=day.events[0];document.getElementById('next-content').innerHTML=`<div class="app-eyebrow">下一项安排 · ${day.date}</div><h2 class="app-title">前往${e.name}</h2><div class="app-sub">停车后步行 · 建议到达 ${e.time}</div><div class="route-summary"><span>${day.route}</span><b>${day.events.length} 项安排</b></div><div class="detail-card"><h3>${e.name}</h3><p>${e.note}</p><p style="margin-top:8px;color:#767987">${e.duration}</p><button class="app-button" data-detail="${e.name}" style="margin-top:14px">查看地点详情　›</button></div><div class="detail-card"><h3>下一站</h3><p>${day.events[1].name} · ${day.events[1].duration}</p></div><div class="detail-note">提醒：故宫和大帅府建议提前预约，国庆期间预留排队时间。</div>`;document.querySelectorAll('[data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));}
+    function renderItinerary(){const d=itinerary[currentDay()]||itinerary[0];document.getElementById('itinerary-content').innerHTML=`<div class="app-eyebrow">沈阳自驾 · 完整行程</div><h2 class="app-title">每日行程</h2><div class="app-sub">10月1日 — 10月5日 · 选择日期查看当天安排</div><div class="route-summary"><span>${d.route}</span><b>${d.events.length} 项安排</b></div><div class="day-picker">${itinerary.map(x=>`<button type="button" class="${x.date===d.date?'active':''}" data-day="${x.date}"><small>${x.label}</small><b>${x.date.slice(3)}</b><small>${x.stay}</small></button>`).join('')}</div><div class="timeline">${d.events.map(e=>`<div class="timeline-row"><time>${e.time}</time><i class="timeline-dot"></i><div class="app-card ${e.name==='清河半岛'?'highlight':''}" data-detail="${e.name}"><h3>${e.name}</h3><div class="app-meta">${e.duration}<br>${e.note}</div></div></div>`).join('')}</div><div class="app-note">点击任一时间卡片进入地点详情；住宿点会显示入住时间、凭证和准备事项。</div>`;document.querySelectorAll('[data-day]').forEach(b=>b.onclick=()=>{window.selectedDate=b.dataset.day;renderItinerary();});document.querySelectorAll('.timeline-row [data-detail]').forEach(b=>b.onclick=()=>openDetail(b.dataset.detail));}
+    function openDetail(name){const p=placeByName(name);if(!p)return;const isStay=p.n==='清河半岛';const d=details[p.n]||{};const nav=`https://uri.amap.com/marker?position=${p.lng},${p.lat}&name=${encodeURIComponent(p.n)}&callnative=1`;const practical=isStay?'<b>入住准备：</b>身份证、预订凭证、泳衣、充电器、换洗衣物<br><b>确认事项：</b>住宿套餐、入住/退房时间、停车和项目收费':`${d.price?`<b>门票：</b>${d.price}<br>`:''}${d.book?`<b>预约：</b>${d.book}`:'开放、票价和预约规则以官方公告为准'}`;document.getElementById('detail-content').innerHTML=`<div class="detail-head"><button class="back-button" id="detail-back">‹　返回${window.selectedDate}行程</button><h2>${p.n}</h2><div class="app-sub">${isStay?'行程内住宿详情':'行程内地点详情'} · ${categories[p.c].name}</div></div><div class="detail-card"><h3>推荐评价</h3><p>${p.t}</p><a class="app-button" href="${nav}" target="_blank" rel="noopener" style="margin-top:14px">地图导航　↗</a></div><div class="detail-card"><h3>${isStay?'入住准备':'实用信息'}</h3><p>${practical}</p></div><div class="detail-note">来源：附件攻略整理；个人体验和价格信息可能变化，请以景区、酒店或官方渠道为准。</div>`;document.getElementById('detail-back').onclick=()=>{renderItinerary();showView('itinerary');};showView('detail');}
+    function renderDiscover(filter){const allowed=filter==='all'?null:filter;const list=places.filter(p=>!allowed||p.c===allowed).slice(0,30);document.getElementById('discover-list').innerHTML=list.map(p=>`<div class="discover-row" data-discover-detail="${p.n}"><i class="swatch" style="background:${categories[p.c].color}"></i><div><strong>${p.n}</strong><small>${categories[p.c].name} · ${p.t}</small></div></div>`).join('');document.querySelectorAll('[data-discover-detail]').forEach(x=>x.onclick=()=>openDetail(x.dataset.discoverDetail));}
+    const discoverFilters=document.getElementById('discover-filters');Object.entries(categories).forEach(([k,v])=>discoverFilters.insertAdjacentHTML('beforeend',`<button type="button" data-discover-cat="${k}">${v.name}</button>`));discoverFilters.insertAdjacentHTML('afterbegin','<button type="button" class="active" data-discover-cat="all">全部</button>');document.querySelectorAll('[data-discover-cat]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-discover-cat]').forEach(x=>x.classList.remove('active'));b.classList.add('active');renderDiscover(b.dataset.discoverCat);});
+    document.querySelectorAll('.bottom-nav button').forEach(b=>b.addEventListener('click',()=>showView(b.dataset.view)));
+    renderNext();renderItinerary();renderDiscover('all');showView('next');
   </script>
 </body>
 </html>
