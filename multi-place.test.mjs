@@ -44,5 +44,15 @@ assert.match(source, /地点概况加载中/,
   'place details should show an explicit network-loading state');
 assert.match(source, /loadVerifiedPlaceIntroForDetail/,
   'opening a place should trigger verified online place-intro loading');
+assert.match(source, /交通时间待确认|道路系数估算/,
+  'self-drive route failures should still produce a transparent estimate instead of blocking the plan');
+assert.match(source, /attachTravelPlaceSuggestions/,
+  'transport departure inputs should provide city suggestions');
+assert.match(source, /openAppDatePicker/,
+  'date fields should use an in-app date picker');
+assert.match(source, /assets\/nav\/nav-default\.png/,
+  'bottom navigation should use the supplied UI2 visual reference');
+assert.match(source, /publish-body[^}]*min-height:132px/,
+  'travel-post body input should be three times the title height');
 
 console.log('multi-place source contract passed');
