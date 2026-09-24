@@ -523,7 +523,7 @@
     const previousRenderItinerary=renderItinerary;renderItinerary=function(){previousRenderItinerary();removeLegacyEditor();setupItineraryInteractions();normalizeItineraryHeader();centerSelectedDay();enableTouchDrag();enableDayLongPress();enableSwipeActions();};
     const previousOpenDetail=openDetail;openDetail=function(name){let place=placeByName(name);if(!place){place=eventPlaceInfo(name);place.i=places.length;places.push(place);}previousOpenDetail(name);if(place.custom&&!place._introLoading){place._introLoading=true;fetchPlaceIntro(place.n,place.city||'').then(text=>{if(text){place.t=text;persistState();if(document.getElementById('detail-view')?.classList.contains('active'))previousOpenDetail(name);}});}};
     enrichRestoredPlaces();renderNext();renderItinerary();renderDiscover('all');showView('next');
-    if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});}catch(e){}});}
+    if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}});}
   </script>
 </body>
 </html>
