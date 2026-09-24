@@ -14,5 +14,9 @@ assert.match(source, /openMultiPlaceSheet\('next'\)/,
 assert.match(source, /openMultiPlaceSheet\('itinerary'\)/,
   'itinerary add entry should use the shared form');
 assert.match(source, /multi-place-add/, 'the form should render an add-place control');
+assert.match(source, /max-width:100%;min-width:0/, 'date and place inputs should fit narrow mobile sheets');
+assert.match(source, /loading="eager" decoding="async" fetchpriority="high"/, 'empty-state artwork should load eagerly');
+assert.match(source, /function openTasteSort\s*\(/, 'taste sorting should have its own control');
+assert.match(source, /id[=:]?["']?expenses-back/, 'expenses should expose a back control');
 
 console.log('multi-place source contract passed');

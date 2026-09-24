@@ -1,4 +1,4 @@
-const VERSION = 'yicheng-v5';
+const VERSION = 'yicheng-v6';
 const APP_SHELL = [
   './',
   './index.html',
