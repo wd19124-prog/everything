@@ -32,5 +32,17 @@ assert.match(source, /火车信息/, 'train transport should open a transport de
 assert.match(source, /每段最多驾驶10小时/, 'self-drive plans should split long drives into ten-hour segments');
 assert.match(source, /提前2小时到机场/, 'flight plans should reserve airport arrival time');
 assert.match(source, /返程交通/, 'generated plans should include return transport');
+assert.match(source, /estimateVerifiedDriveTime/,
+  'self-drive routing should use a verified route response rather than an invented fallback');
+assert.match(source, /交通时间暂时无法核实/,
+  'unverified transport data should be disclosed instead of displayed as precise');
+assert.match(source, /每驾驶约2至3小时/,
+  'self-drive plans should add a rest interval every two to three hours');
+assert.match(source, /休息至少15分钟/,
+  'self-drive rest cards should state a minimum rest duration');
+assert.match(source, /地点概况加载中/,
+  'place details should show an explicit network-loading state');
+assert.match(source, /loadVerifiedPlaceIntroForDetail/,
+  'opening a place should trigger verified online place-intro loading');
 
 console.log('multi-place source contract passed');
