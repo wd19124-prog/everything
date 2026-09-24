@@ -1,0 +1,17 @@
+{
+  "name": "一程｜记录你的每一步，规划你的每一程",
+  "short_name": "一程",
+  "description": "记录旅途、规划行程、收藏城市记忆的一程旅行应用。",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5f3ff",
+  "theme_color": "#5d55a6",
+  "icons": [
+    {"src":"./icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},
+    {"src":"./icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}
+  ]
+}

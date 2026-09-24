@@ -4,6 +4,12 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>一程｜记录你的每一步，规划你的每一程</title>
+  <meta name="theme-color" content="#5d55a6" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="一程" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
   <style>
     :root { color-scheme: light; font-family: -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",sans-serif; }
@@ -512,6 +518,7 @@
     const previousRenderItinerary=renderItinerary;renderItinerary=function(){previousRenderItinerary();removeLegacyEditor();setupItineraryInteractions();normalizeItineraryHeader();centerSelectedDay();enableTouchDrag();enableDayLongPress();enableSwipeActions();};
     const previousOpenDetail=openDetail;openDetail=function(name){let place=placeByName(name);if(!place){place=eventPlaceInfo(name);place.i=places.length;places.push(place);}previousOpenDetail(name);if(place.custom&&!place._introLoading){place._introLoading=true;fetchPlaceIntro(place.n,place.city||'').then(text=>{if(text){place.t=text;persistState();if(document.getElementById('detail-view')?.classList.contains('active'))previousOpenDetail(name);}});}};
     enrichRestoredPlaces();renderNext();renderItinerary();renderDiscover('all');showView('next');
+    if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
   </script>
 </body>
 </html>
