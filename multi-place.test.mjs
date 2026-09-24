@@ -22,5 +22,8 @@ assert.match(source, /query\.length<2/, 'empty place input should not open sugge
 assert.match(source, /同步行程/, 'empty itinerary should expose sync in the new-trip choice');
 assert.match(source, /const renderItineraryWithSync=renderItinerary/, 'empty itinerary should remove the bulky sync panel');
 assert.match(source.slice(source.lastIndexOf('function buildPlan')), /selected\.map\(p=>p\.n\)/, 'effective planner should render concrete place names');
+assert.match(source, /const cities=plannerCityCandidates\(\)/, 'planner suggestions should come from cities');
+assert.match(source, /plan-preview-back.*planner\.classList\.add\('open'\)/s, 'preview back should return to the current planner step');
+assert.match(source, /筛选结果总花费/, 'expense summary should use the total label');
 
 console.log('multi-place source contract passed');
