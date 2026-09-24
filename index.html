@@ -97,6 +97,7 @@
     .station{width:230px;height:230px;border-radius:30px;background:transparent;box-shadow:none}.station-image{display:block;width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 18px 28px rgba(120,110,180,.16))}.empty-state{text-align:center;min-height:calc(100dvh - 150px);padding:18px 0 20px;display:flex;flex-direction:column;align-items:center}.empty-state .app-eyebrow,.empty-state .app-title{display:none}.itinerary-empty .add-trip-button{display:none}.empty-state img{display:block;width:min(82vw,430px);max-height:46vh;object-fit:contain;margin:24px auto 4px}.empty-state h3{margin:0;color:#172b4d;font-size:27px}.empty-state p{margin:8px 0 22px;color:#7b879d;font-size:16px}.empty-action{max-width:360px;border-radius:999px!important;font-size:18px;padding:15px!important;background:linear-gradient(100deg,#a86cff,#8dbdff,#ffb3da)!important;box-shadow:0 12px 30px rgba(139,124,255,.25)!important}.post-images{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}.post-image{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}.publish-preview{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 12px}.publish-preview img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:9px}.post-delete{border:0!important;background:#fff1f3!important;color:#b95668!important}
 .station{width:300px;height:300px;background:transparent;box-shadow:none;border-radius:0}.station-image{display:block;width:300px;height:300px;object-fit:contain;filter:drop-shadow(0 14px 20px #a98ef32b)}
 .itinerary-empty h3{font-size:0!important}.itinerary-empty h3:after{content:'打算去哪儿';font-size:27px}
+.multi-place-rows{display:grid;gap:10px;margin-bottom:10px}.multi-place-row{position:relative}.multi-place-row .place-suggestion-list{margin-top:-4px}.multi-place-add{display:none;width:46px;height:46px;margin:4px auto 12px;border:1px dashed #9b8df0;border-radius:50%;background:#f4f1ff;color:#6747e8;font-size:28px;line-height:1;cursor:pointer}.multi-place-add.visible{display:block}
 .itinerary-empty h3,.itinerary-empty p{width:100%;text-align:center}.empty-state img{width:min(76vw,380px)!important;max-height:42vh!important;margin-top:18px!important}.planner-options label:has(input:checked){border-color:#8b7cff;background:#f0edff;color:#4f3fb5}
 </style>
 </head>
@@ -544,6 +545,53 @@
     document.addEventListener('click',event=>{if(event.target.id!=='plan-next-2')return;setTimeout(()=>{const sheet=document.getElementById('planner-sheet'),transport=(planningState.answers?.transport||[]).join('、');if(!sheet||!/飞机/.test(transport)||sheet.querySelector('#flight-times-enhanced'))return;const old=sheet.querySelector('#plan-flight-time');if(!old)return;old.outerHTML='<span id="flight-times-enhanced" class="planner-fields"><label>起飞时间<input id="plan-flight-departure" type="time"></label><label>到达时间<input id="plan-flight-arrival" type="time"></label><input id="plan-flight-time" type="text" hidden></span>';const sync=()=>{sheet.querySelector('#plan-flight-time').value=`${sheet.querySelector('#plan-flight-departure').value||''} - ${sheet.querySelector('#plan-flight-arrival').value||''}`;};sheet.querySelector('#plan-flight-departure').oninput=sync;sheet.querySelector('#plan-flight-arrival').oninput=sync;},0);});
     function updatePlanCopy(){const title=document.querySelector('#itinerary-content .itinerary-empty h3');if(title)title.textContent='打算去哪儿';}
     async function showPlanLoading(){let sheet=document.getElementById('plan-loading-sheet');if(!sheet){sheet=document.createElement('section');sheet.id='plan-loading-sheet';sheet.className='trip-sheet planner-sheet';sheet.innerHTML='<div class="planner-loading"><h3>正在生成你的路线</h3><p>正在结合问卷偏好和交通信息整理中</p><div class="footprints"><i></i><i></i><i></i><i></i></div></div>';document.body.appendChild(sheet);}sheet.classList.add('open');if(!plannerDestinationPlaces().length)await Promise.race([loadPlanningDestinationPlaces(),new Promise(resolve=>setTimeout(resolve,4000))]);const plan=buildPlan(),flight=(planningState.answers?.flightTime||'').match(/-\s*(\d{1,2}):(\d{2})/);if(flight&&plan[0]?.events?.[0]){let minutes=Number(flight[1])*60+Number(flight[2])+60;plan[0].events[0].time=`${String(Math.floor(minutes/60)%24).padStart(2,'0')}:${String(minutes%60).padStart(2,'0')}`;}sheet.classList.remove('open');showPlanPreview(plan);}
+    function addMultiPlaceRow(container){
+      const row=document.createElement('div');row.className='multi-place-row';
+      row.innerHTML='<input class="place-suggestions multi-place-input" placeholder="输入地点名称"><div class="place-suggestion-list multi-place-hints"></div>';
+      container.appendChild(row);
+      const input=row.querySelector('input'),hints=row.querySelector('.multi-place-hints');
+      const renderHints=()=>{
+        const q=input.value.trim().toLowerCase();
+        const matches=[...new Map(places.map(p=>{const city=placeCity(p)||p.city||'城市待确认';return [`${p.n} · ${city}`,p];})).entries()]
+          .filter(([label,p])=>!q||label.toLowerCase().includes(q)||p.n.toLowerCase().includes(q)).slice(0,10);
+        hints.innerHTML=matches.map(([label])=>`<button type="button" class="place-suggestion-item" data-place-label="${label}">${label}</button>`).join('');
+        hints.classList.toggle('open',Boolean(matches.length));
+        hints.querySelectorAll('[data-place-label]').forEach(button=>button.onclick=()=>{const [name,city]=button.dataset.placeLabel.split(' · ');input.value=name;input.dataset.city=city||'';hints.classList.remove('open');updateMultiPlaceAdd();});
+        updateMultiPlaceAdd();
+      };
+      input.oninput=renderHints;
+      input.onfocus=renderHints;
+      return row;
+    }
+    function openMultiPlaceSheet(source){
+      let sheet=document.getElementById('multi-place-sheet');
+      if(!sheet){
+        sheet=document.createElement('section');sheet.id='multi-place-sheet';sheet.className='trip-sheet';
+        sheet.innerHTML='<h3>添加地点</h3><p>直接输入地点名称，可从候选词中选择；候选词会标注所属城市。</p><input id="multi-place-date" type="date"><div class="multi-place-rows"></div><button type="button" class="multi-place-add" aria-label="添加另一个地点">+</button><div class="trip-sheet-actions"><button class="cancel" id="multi-place-cancel">取消</button><button id="multi-place-save">添加</button></div>';
+        document.body.appendChild(sheet);
+        const rows=sheet.querySelector('.multi-place-rows'),add=sheet.querySelector('.multi-place-add');
+        sheet._rows=rows;sheet._add=add;
+        add.onclick=()=>{addMultiPlaceRow(rows);updateMultiPlaceAdd();rows.lastElementChild?.querySelector('input')?.focus();};
+        sheet.querySelector('#multi-place-cancel').onclick=()=>sheet.classList.remove('open');
+        sheet.querySelector('#multi-place-save').onclick=async()=>{const names=[...rows.querySelectorAll('.multi-place-input')].map(input=>({name:input.value.trim(),city:input.dataset.city||''})).filter(x=>x.name);if(!names.length){alert('请至少输入一个地点');return;}const rawDate=sheet.querySelector('#multi-place-date').value;if(!rawDate){alert('请选择日期');return;}const save=sheet.querySelector('#multi-place-save');save.disabled=true;save.textContent='添加中…';try{await saveMultiplePlaces(names,rawDate);window.selectedDate=ensureItineraryDate(rawDate).date;sheet.classList.remove('open');}finally{save.disabled=false;save.textContent='添加';}};
+      }
+      sheet.dataset.source=source;sheet.querySelector('#multi-place-date').value=window.selectedDate&&/^\d{4}-\d{2}-\d{2}$/.test(window.selectedDate)?window.selectedDate:todayInputValue();
+      sheet._rows.innerHTML='';addMultiPlaceRow(sheet._rows);updateMultiPlaceAdd();sheet.classList.add('open');sheet._rows.querySelector('input')?.focus();
+    }
+    function updateMultiPlaceAdd(){const sheet=document.getElementById('multi-place-sheet');if(!sheet)return;const hasValue=[...sheet.querySelectorAll('.multi-place-input')].some(input=>input.value.trim());sheet._add.classList.toggle('visible',hasValue);}
+    async function resolveEnteredPlace(name,city){
+      const existing=placeByName(name);if(existing)return existing;
+      let lat=41.805,lng=123.45,resolvedCity=city||detectedCity||'';
+      try{const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),2200);const geo=await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=cn&accept-language=zh-CN&q=${encodeURIComponent(name+(city?` ${city}`:''))}`,{signal:controller.signal}).then(r=>r.json());clearTimeout(timer);if(geo[0]){lat=Number(geo[0].lat)||lat;lng=Number(geo[0].lon)||lng;const address=geo[0].address||{};resolvedCity=address.city||address.municipality||address.town||address.county||address.state_district||resolvedCity;}}catch(e){}
+      const category=inferCategory(name),place={n:name,c:category,lat,lng,city:resolvedCity,custom:true,img:categories[category]?.img,t:`${name}是${resolvedCity||'目的地'}的一处地点，建议出发前查看官方开放和预约信息。`,i:places.length};places.push(place);try{addPlaceMarker(place);}catch(e){}return place;
+    }
+    async function saveMultiplePlaces(rows,rawDate){
+      const day=ensureItineraryDate(rawDate),seen=new Set(day.events.map(event=>event.name));
+      for(const row of rows){if(!row.name||seen.has(row.name))continue;const place=await resolveEnteredPlace(row.name,row.city);day.events.push({time:'待定',name:place.n,duration:inferDuration(place.n,place.c),note:`${place.city||row.city||detectedCity||''} · ${place.t||'地点信息待补充'}`.replace(/^ · /,'')});seen.add(place.n);}
+      updateDaySummary(day);reflowDay(day.date);persistState();renderItinerary();renderNext();renderDiscover('all');
+    }
+    function openNextPlaceSheet(){openMultiPlaceSheet('next');}
+    document.addEventListener('click',event=>{if(!event.target.closest('#choose-add'))return;event.preventDefault();event.stopImmediatePropagation();document.getElementById('add-choice-sheet')?.classList.remove('open');openMultiPlaceSheet('itinerary');},true);
     enrichRestoredPlaces();renderNext();renderItinerary();updatePlanCopy();renderDiscover('all');showView('next');
     if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}});}
   </script>
