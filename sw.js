@@ -1,11 +1,11 @@
-const VERSION = 'yicheng-v6';
+const VERSION = 'rensheng-yicheng-v7';
 const APP_SHELL = [
   './',
   './index.html',
   './ui-theme-v3.css',
   './manifest.webmanifest',
-  './icons/icon-192-v3.png',
-  './icons/icon-512-v3.png',
+  './icons/icon-192-v4.png',
+  './icons/icon-512-v4.png',
   './assets/station/bus_stop_loop_01.png',
   './assets/station-static.png',
   './assets/empty-next.png',
