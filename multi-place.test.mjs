@@ -25,5 +25,8 @@ assert.match(source.slice(source.lastIndexOf('function buildPlan')), /selected\.
 assert.match(source, /const cities=plannerCityCandidates\(\)/, 'planner suggestions should come from cities');
 assert.match(source, /plan-preview-back.*planner\.classList\.add\('open'\)/s, 'preview back should return to the current planner step');
 assert.match(source, /筛选结果总花费/, 'expense summary should use the total label');
+assert.match(source, /55000/, 'planner lookup should allow a realistic network window');
+assert.match(source, /overpass-api\.de\/api\/interpreter\?data=/, 'planner should use the tested Overpass GET endpoint');
+assert.match(source, /只有读取到具体地点后/, 'planner loading should guard against empty preview plans');
 
 console.log('multi-place source contract passed');
