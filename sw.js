@@ -1,11 +1,15 @@
-const VERSION = 'yicheng-v1';
+const VERSION = 'yicheng-v3';
 const APP_SHELL = [
   './',
   './index.html',
+  './ui-theme-v3.css',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './assets/station/bus_stop_loop_01.png'
+  './assets/station/bus_stop_loop_01.png',
+  './assets/station-static.png',
+  './assets/empty-next.png',
+  './assets/empty-itinerary.png'
 ];
 
 self.addEventListener('install', event => {
@@ -14,6 +18,10 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== VERSION).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+});
+
+self.addEventListener('message', event => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
 self.addEventListener('fetch', event => {
