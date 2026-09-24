@@ -28,5 +28,9 @@ assert.match(source, /筛选结果总花费/, 'expense summary should use the to
 assert.match(source, /55000/, 'planner lookup should allow a realistic network window');
 assert.match(source, /overpass-api\.de\/api\/interpreter\?data=/, 'planner should use the tested Overpass GET endpoint');
 assert.match(source, /只有读取到具体地点后/, 'planner loading should guard against empty preview plans');
+assert.match(source, /火车信息/, 'train transport should open a transport detail step');
+assert.match(source, /每段最多驾驶10小时/, 'self-drive plans should split long drives into ten-hour segments');
+assert.match(source, /提前2小时到机场/, 'flight plans should reserve airport arrival time');
+assert.match(source, /返程交通/, 'generated plans should include return transport');
 
 console.log('multi-place source contract passed');
