@@ -29,4 +29,24 @@ assert.match(source, /住宿区域建议：/,
 assert.doesNotMatch(source.slice(source.lastIndexOf('function applyPlanLodgingAreas')), /酒店名称|推荐酒店|入住.*酒店/,
   'lodging suggestions must not name a specific hotel');
 
+assert.match(source, /#my-view \.my-card\.expense\{top:59%!important/,
+  'expense, memory, and taste labels must use equal vertical spacing');
+assert.match(source, /my-card\.expense h3,#my-view \.my-card\.memory h3,#my-view \.my-card\.taste h3\{font-size:27px!important;color:#06105d!important/,
+  'expense must share the same text style as memory and taste');
+
+assert.match(source, /function dedupePlannedPlaces\s*\(/,
+  'the effective planner must remove repeated attractions across all days');
+assert.match(source, /function addDailyMeals\s*\(/,
+  'the effective planner must schedule daily meals');
+assert.match(source, /place\.c==='food'/,
+  'real meal recommendations must come from food places');
+assert.match(source, /\['早餐','08:00'\].*\['午餐','12:00'\].*\['晚餐','18:00'\]/s,
+  'a full destination day must include breakfast, lunch, and dinner');
+
+const simpleTransit = source.slice(source.lastIndexOf('function installSimpleTransitStep'));
+assert.match(simpleTransit, /id="plan-transit-origin"/,
+  'plane and train transport details must ask for the departure city');
+assert.doesNotMatch(simpleTransit, /plan-flight-destination|plan-train-destination|到达地点/,
+  'the effective plane and train step must not ask for the already-known destination');
+
 console.log('planner and itinerary regression contract passed');
