@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-title" content="人生一程" />
   <link rel="manifest" href="./manifest.webmanifest?v=4" />
   <link rel="apple-touch-icon" href="./icons/icon-192-v5.png" />
-  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" crossorigin="" />
+  <link rel="stylesheet" href="./assets/vendor/maplibre-gl.css" />
   <link rel="stylesheet" href="./ui-theme-v3.css" />
   <link rel="preload" as="image" href="./assets/empty-next.png" fetchpriority="high" />
   <link rel="preload" as="image" href="./assets/empty-itinerary.png" fetchpriority="high" />
@@ -154,6 +154,7 @@
   #itinerary-view{padding-top:18px!important}#itinerary-view .itinerary-top{margin:0 0 4px!important}#itinerary-view .itinerary-top .app-title{font-size:27px!important}#itinerary-view .route-summary{margin:6px 0!important;padding:8px 10px!important}#itinerary-view .day-picker{display:flex!important;gap:4px!important;padding:6px!important;margin:0 0 6px!important;border-radius:16px!important;overflow-x:auto!important;scroll-snap-type:x proximity}#itinerary-view .day-picker button{flex:0 0 calc((100% - 16px)/5)!important;min-width:0!important;height:51px!important;padding:4px 1px!important;border-radius:11px!important;scroll-snap-align:start}#itinerary-view .day-picker button b{font-size:16px!important;margin:1px 0!important}#itinerary-view .day-picker button small{font-size:9px!important;line-height:1.1!important}#itinerary-view .day-picker button small:last-child{display:none!important}#itinerary-view .day-expense{margin:4px 0 5px!important;padding:5px 2px!important;font-size:10px!important}#itinerary-view .lodging-tip{margin:0 0 6px;padding:6px 9px;border-radius:10px;background:#f5f3ff;color:#66617f;font-size:10px;line-height:1.25}#itinerary-view .timeline{margin-top:4px!important}#itinerary-view .timeline-row{grid-template-columns:46px minmax(0,1fr)!important;gap:7px!important;margin-bottom:6px!important}#itinerary-view .time-edit{padding-top:9px!important;font-size:13px!important}#itinerary-view .swipe-cell{margin-bottom:0!important;border-radius:15px!important}#itinerary-view .app-card{padding:8px 11px!important;border-radius:15px!important;min-height:52px!important}#itinerary-view .app-card h3{font-size:18px!important;margin-bottom:2px!important;line-height:1.2!important}#itinerary-view .app-card .app-meta{font-size:11px!important;line-height:1.25!important;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}#itinerary-view .app-note{margin-top:4px!important;font-size:10px!important}
   #itinerary-view .day-picker{display:grid!important;grid-auto-flow:column;grid-auto-columns:calc(20% - 3.2px);width:100%!important;max-width:100%!important;box-sizing:border-box!important}#itinerary-view .day-picker button{box-sizing:border-box!important;width:100%!important}#itinerary-view .day-picker button small:last-child{display:block!important}
   #my-view .my-card.expense{top:59%!important;width:auto!important;height:auto!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}#my-view .my-card.memory{top:72%!important}#my-view .my-card.taste{top:85%!important}#my-view .my-card.expense h3,#my-view .my-card.memory h3,#my-view .my-card.taste h3{font-size:27px!important;color:#06105d!important;font-weight:500!important}
+  #map{background:#fcfcfd!important}.discover-view{background:transparent!important}.discover-map-marker{width:54px;height:54px;display:block;cursor:pointer;filter:drop-shadow(0 4px 8px #59658a24)}.discover-map-marker img{display:block;width:100%;height:100%;object-fit:contain}.discover-row-icon{width:36px;height:36px;object-fit:contain;flex:none;margin-top:1px}
   .plan-stay-hint{margin:0 0 8px;color:#6f6984;font-size:12px;line-height:1.4}
   @media (min-width:761px){#next-view,#itinerary-view,#detail-view,#my-view{padding:52px 40px 40px}#detail-view .detail-head{margin:-52px -40px 24px;padding:52px 40px 0}.bottom-nav{width:430px;right:28px;left:auto}}
   </style>
@@ -190,7 +191,7 @@
     <div class="mobile-filter" id="mobile-filter"></div>
     <div class="mobile-list" id="mobile-list"></div>
   </section>
-  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js" crossorigin=""></script>
+  <script src="./assets/vendor/maplibre-gl.js"></script>
   <script>
     const categories = {
       history: {name:'历史文化', color:'#b45309', img:'https://images.unsplash.com/photo-1548013146-72479768bada?w=900'},
@@ -324,7 +325,8 @@
       ,{n:'清河半岛',c:'leisure',lat:41.9950,lng:123.7200,t:'附件作者评价：沈阳洗浴的代表性目的地，基础门票就有造浪池、漂流、室外温泉、桑拿等设施，也可加价住宿；适合愿意在园区内休息一晚的人。营业项目和票价会变化。'}
       ,{n:'康溪温泉',c:'leisure',lat:42.0200,lng:123.7500,t:'附件作者评价：位于本溪方向，风格比清河半岛更偏便利休闲，集温泉疗养与室内水上娱乐于一体，适合家庭出行追求性价比；往返车程需单独安排。'}
     ];
-    const map = new maplibregl.Map({container:'map',style:'https://tiles.openfreemap.org/styles/liberty',center:[116.4074,39.9042],zoom:10.8,attributionControl:true});
+    function createWhiteMapStyle(){return{version:8,sources:{openStreetMap:{type:'raster',tiles:['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],tileSize:256,attribution:'© OpenStreetMap contributors'}},layers:[{id:'app-white-background',type:'background',paint:{'background-color':'#fcfcfd'}},{id:'open-street-map-light',type:'raster',source:'openStreetMap',minzoom:0,maxzoom:19,paint:{'raster-opacity':.5,'raster-saturation':-1,'raster-contrast':-.25,'raster-brightness-min':.35,'raster-brightness-max':1}}]};}
+    const map = new maplibregl.Map({container:'map',style:createWhiteMapStyle(),center:[116.4074,39.9042],zoom:10.8,attributionControl:true});
     map.addControl(new maplibregl.NavigationControl(),'top-left');
     const layers = {}, markers = {};
     Object.keys(categories).forEach(k=>layers[k]=[]);
@@ -342,6 +344,10 @@
     };
     let userPosition=null, nearbyOnly=false, userMarker=null;
     const selected=Object.fromEntries(Object.keys(categories).map(k=>[k,true]));
+    const discoverMarkerAssets={scenic:'./assets/map-markers/scenic.png',food:'./assets/map-markers/food.png',leisure:'./assets/map-markers/leisure.png'};
+    function discoverMarkerCategory(p){return p?.c==='food'?'food':p?.c==='leisure'?'leisure':'scenic';}
+    function discoverMarkerAsset(p){return discoverMarkerAssets[discoverMarkerCategory(p)]||discoverMarkerAssets.scenic;}
+    function createPlaceMarkerElement(p){const category=discoverMarkerCategory(p),element=document.createElement('div'),image=document.createElement('img');element.className=`discover-map-marker discover-map-marker-${category}`;element.setAttribute('role','button');element.setAttribute('aria-label',`${category==='food'?'美食':category==='leisure'?'休闲':'景点'}：${p.n}`);image.src=discoverMarkerAsset(p);image.alt='';element.appendChild(image);return element;}
     places.forEach((p,i)=>{
       const cat=categories[p.c];
       const d=details[p.n]||{};
@@ -351,10 +357,10 @@
       const extra=(price||book)?`<div style="margin-top:6px">${price?`<b>门票：</b>${price}<br>`:''}${book?`<b>预约：</b>${book}`:''}</div>`:'';
       const nav=`https://uri.amap.com/marker?position=${p.lng},${p.lat}&name=${encodeURIComponent(p.n)}&callnative=1`;
       const popupHtml=`<div class="popup-title">${p.n}</div><img src="${image}" alt="${p.n}代表性图片" style="width:100%;max-height:150px;object-fit:cover;border-radius:4px;margin:5px 0"><div class="popup-meta">${cat.name}</div><div>${p.t}</div>${extra}<a class="navigate-link" href="${nav}" target="_blank" rel="noopener">在地图中导航</a>`;
-      const m=new maplibregl.Marker({color:cat.color}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);m.getPopup().on('open',collapseDiscoverSheet);
+      const m=new maplibregl.Marker({element:createPlaceMarkerElement(p),anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);m.getPopup().on('open',collapseDiscoverSheet);
       layers[p.c].push(m); markers[i]=m; p.i=i;
     });
-    function addPlaceMarker(p){const cat=categories[p.c]||categories.history;p.i=places.indexOf(p);const nav=`https://uri.amap.com/marker?position=${p.lng},${p.lat}&name=${encodeURIComponent(p.n)}&callnative=1`;const popupHtml=`<div class="popup-title">${p.n}</div><div class="popup-meta">${cat.name}${p.city?` · ${p.city}`:''}</div><div>${p.t||'手动添加地点，详情待补充。'}</div><a class="navigate-link" href="${nav}" target="_blank" rel="noopener">在地图中导航</a>`;const marker=new maplibregl.Marker({color:cat.color}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);marker.getPopup().on('open',collapseDiscoverSheet);layers[p.c].push(marker);markers[p.i]=marker;}
+    function addPlaceMarker(p){const cat=categories[p.c]||categories.history;p.i=places.indexOf(p);const nav=`https://uri.amap.com/marker?position=${p.lng},${p.lat}&name=${encodeURIComponent(p.n)}&callnative=1`;const popupHtml=`<div class="popup-title">${p.n}</div><div class="popup-meta">${cat.name}${p.city?` · ${p.city}`:''}</div><div>${p.t||'手动添加地点，详情待补充。'}</div><a class="navigate-link" href="${nav}" target="_blank" rel="noopener">在地图中导航</a>`;const marker=new maplibregl.Marker({element:createPlaceMarkerElement(p),anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(new maplibregl.Popup({maxWidth:'290px'}).setHTML(popupHtml)).addTo(map);marker.getPopup().on('open',collapseDiscoverSheet);layers[p.c].push(marker);markers[p.i]=marker;}
     const legend=document.getElementById('legend');
     const filters=document.getElementById('filters');
     const mobileFilter=document.getElementById('mobile-filter');
@@ -516,7 +522,7 @@
     function nearbyDisplayIntro(place){const text=String(place.t||'').trim();return isNearbyTemplate(text)?'正在检索公开资料中的地点介绍…':placeIntro(place);}
     async function enrichNearbyPlace(place){if(!place?.dynamic||place._introLoading)return;place._introLoading=true;try{const cache=JSON.parse(localStorage.getItem('sy-nearby-intros')||'{}'),key=`${place.city||''}|${place.n}`;if(cache[key]&&!isNearbyTemplate(cache[key])){place.t=cache[key];return;}const intro=await fetchPlaceIntro(place.n,place.city||'');if(intro&&!isNearbyTemplate(intro)){place.t=intro;cache[key]=intro;try{localStorage.setItem('sy-nearby-intros',JSON.stringify(cache));}catch(e){}}}catch(e){}finally{place._introLoading=false;}}
     async function enrichNearbyPlaces(list){const candidates=list.map(item=>item.p).filter(p=>p.dynamic&&!p._introChecked);for(let i=0;i<candidates.length;i+=12){await Promise.all(candidates.slice(i,i+12).map(async p=>{p._introChecked=true;await enrichNearbyPlace(p);}));}if(candidates.length)renderDiscover('all');}
-    function renderDiscover(filter){const allowed=filter==='all'?null:(discoverCategoryMap[filter]||[filter]);const source=activeDiscoverCity?places.filter(p=>p.dynamic&&p.city===activeDiscoverCity):[];const origin=userPosition||discoverOrigin;const list=source.filter(p=>!allowed||allowed.includes(p.c)).map(p=>({p,distance:origin?distanceKm(origin,p):Infinity})).sort((a,b)=>a.distance-b.distance).slice(0,50);document.getElementById('discover-list').innerHTML=list.length?list.map(({p,distance})=>`<div class="discover-row" data-discover-detail="${p.n}"><i class="swatch" style="background:${categories[p.c].color}"></i><div><strong>${p.n}</strong><small>距离${Number.isFinite(distance)?(distance<1?`${Math.round(distance*1000)}米`:`${distance.toFixed(1)}公里`):'距离未知'} · ${nearbyDisplayIntro(p)}</small></div></div>`).join(''):'<div class="note">请允许定位后查看真实附近地点。</div>';document.querySelectorAll('[data-discover-detail]').forEach(x=>x.onclick=()=>openDetail(x.dataset.discoverDetail));if(list.some(item=>item.p.dynamic))enrichNearbyPlaces(list);}
+    function renderDiscover(filter){const allowed=filter==='all'?null:(discoverCategoryMap[filter]||[filter]);const source=activeDiscoverCity?places.filter(p=>p.dynamic&&p.city===activeDiscoverCity):[];const origin=userPosition||discoverOrigin;const list=source.filter(p=>!allowed||allowed.includes(p.c)).map(p=>({p,distance:origin?distanceKm(origin,p):Infinity})).sort((a,b)=>a.distance-b.distance).slice(0,50);document.getElementById('discover-list').innerHTML=list.length?list.map(({p,distance})=>`<div class="discover-row" data-discover-detail="${p.n}"><img class="discover-row-icon" src="${discoverMarkerAsset(p)}" alt=""><div><strong>${p.n}</strong><small>距离${Number.isFinite(distance)?(distance<1?`${Math.round(distance*1000)}米`:`${distance.toFixed(1)}公里`):'距离未知'} · ${nearbyDisplayIntro(p)}</small></div></div>`).join(''):'<div class="note">请允许定位后查看真实附近地点。</div>';document.querySelectorAll('[data-discover-detail]').forEach(x=>x.onclick=()=>openDetail(x.dataset.discoverDetail));if(list.some(item=>item.p.dynamic))enrichNearbyPlaces(list);}
     let expenseCalendarMonth=new Date();
     const expenseFilterState={year:[],month:[],day:[],city:[],category:['门票','住宿','餐饮','交通','其他']};
     function expenseMatches(item){const p=dateParts(item.date),checks=[['year',p?.year],['month',p?.month],['day',p?.day],['city',item.city],['category',item.category]];return checks.every(([key,value])=>!expenseFilterState[key].length||expenseFilterState[key].includes(String(value)));}

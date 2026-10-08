@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v8';
+const VERSION = 'rensheng-yicheng-v9';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,11 @@ const APP_SHELL = [
   './assets/station-static.png',
   './assets/empty-next.png',
   './assets/empty-itinerary.png'
+  ,'./assets/map-markers/scenic.png'
+  ,'./assets/map-markers/food.png'
+  ,'./assets/map-markers/leisure.png'
+  ,'./assets/vendor/maplibre-gl.css'
+  ,'./assets/vendor/maplibre-gl.js'
 ];
 
 self.addEventListener('install', event => {
