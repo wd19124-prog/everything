@@ -1,7 +1,8 @@
-const VERSION = 'rensheng-yicheng-v9';
+const VERSION = 'rensheng-yicheng-v10';
 const APP_SHELL = [
   './',
   './index.html',
+  './app-core.js',
   './ui-theme-v3.css',
   './manifest.webmanifest',
   './icons/icon-192-v5.png',
