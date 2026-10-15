@@ -1,0 +1,73 @@
+/* motion.css 动效与交互层 */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--spring:cubic-bezier(.34,1.56,.64,1)}
+/* 按钮与可点元素的轻微缩放 */
+button,.discover-row,.item,.navigate-link,[data-view]{transition:transform .22s var(--spring),background-color .2s,box-shadow .2s,color .2s,opacity .2s;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active,.discover-row:active,.item:active,.navigate-link:active{transform:scale(.95)}
+@media(hover:hover){button:hover,.discover-row:hover,.item:hover{transform:scale(1.025)}button:active,.discover-row:active,.item:active{transform:scale(.95)}}
+/* 图标 */
+.ic{width:20px;height:20px;flex:none;vertical-align:-4px}.ic-sm{width:15px;height:15px;vertical-align:-2px}
+.discover-locate,.mobile-tools button,.discover-sheet-toggle{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.discover-sheet-toggle .ic{transition:transform .3s var(--ease)}.discover-sheet-toggle[aria-expanded=true] .ic{transform:rotate(180deg)}
+.bottom-nav button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.bottom-nav .nav-ic{width:26px;height:26px;stroke-width:1.8;transition:transform .35s var(--spring),stroke-width .2s}
+.bottom-nav button.active .nav-ic{transform:translateY(-2px) scale(1.12);stroke-width:2.2}
+.bottom-nav button span{transition:opacity .2s,transform .3s var(--ease)}.bottom-nav button.active span{transform:translateY(-1px)}
+/* 页面切换 形变过渡 */
+::view-transition-old(root){animation:vtOut .2s var(--ease) both}
+::view-transition-new(root){animation:vtIn .34s var(--ease) both}
+.bottom-nav{view-transition-name:bottom-nav}
+@keyframes vtOut{to{opacity:0;transform:scale(.985)}}
+@keyframes vtIn{from{opacity:0;transform:translateY(14px) scale(.99)}}
+@supports not (view-transition-name:none){.app-view.active{animation:viewIn .34s var(--ease)}}
+@keyframes viewIn{from{opacity:0;transform:translateY(14px)}}
+/* 列表与卡片出现 */
+.discover-row,.item,.card,.event-card,.timeline-card,.my-card{animation:riseIn .4s var(--ease) both}
+.discover-row:nth-child(2),.item:nth-child(2){animation-delay:70ms}.discover-row:nth-child(3),.item:nth-child(3){animation-delay:105ms}.discover-row:nth-child(4),.item:nth-child(4){animation-delay:140ms}.discover-row:nth-child(5),.item:nth-child(5){animation-delay:175ms}.discover-row:nth-child(6),.item:nth-child(6){animation-delay:210ms}.discover-row:nth-child(7),.item:nth-child(7){animation-delay:245ms}.discover-row:nth-child(8),.item:nth-child(8){animation-delay:280ms}.discover-row:nth-child(9),.item:nth-child(9){animation-delay:315ms}.discover-row:nth-child(10),.item:nth-child(10){animation-delay:350ms}.discover-row:nth-child(11),.item:nth-child(11){animation-delay:350ms}
+@keyframes riseIn{from{opacity:0;transform:translateY(12px)}}
+/* 地图标记 弹出与消失 */
+.discover-map-marker img{animation:markerPop .5s var(--spring) both}
+@keyframes markerPop{from{opacity:0;transform:scale(.3) translateY(8px)}}
+.maplibregl-popup-content{animation:popIn .26s var(--ease) both;transform-origin:50% 100%}
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.94)}}
+.location-status{animation:toastIn .3s var(--ease) both}
+@keyframes toastIn{from{opacity:0;transform:translateY(-10px)}}
+.photo-viewer,.sheet-backdrop,.mobile-sheet{transition:opacity .28s var(--ease),transform .34s var(--ease),visibility .28s}
+/* 加载骨架 */
+#map:not(.map-ready){background:linear-gradient(100deg,#f1f2f6 30%,#fafbfd 50%,#f1f2f6 70%) 0 0/200% 100%;animation:shimmer 1.3s linear infinite}
+#map.map-ready{animation:none}
+.skeleton-row{display:flex;gap:12px;align-items:center;padding:12px 4px}
+.skeleton-row i{width:40px;height:40px;border-radius:12px;background:#eceef3;flex:none}
+.skeleton-row b{display:block;height:12px;border-radius:6px;background:#eceef3;margin:4px 0;width:60%}
+.skeleton-row b+b{width:85%;height:10px}
+.skeleton-row i,.skeleton-row b{background:linear-gradient(100deg,#eceef3 30%,#f8f9fb 50%,#eceef3 70%) 0 0/200% 100%;animation:shimmer 1.3s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}
+/* 移动端安全区 */
+.mobile-tools{bottom:calc(10px + env(safe-area-inset-bottom))}
+.app-view{padding-top:calc(28px + env(safe-area-inset-top))}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+/* 发现页顶部 与 提示 与 版权位置修正 */
+body .discover-sheet-head>div:first-child{flex:1;min-width:0}
+body .discover-sheet-head h2{font-size:26px;white-space:nowrap;margin:0 0 2px}
+body .discover-sheet-head p{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body .discover-locate{padding:9px 13px;font-size:13px;margin:0 40px 0 0;flex:none;float:none;align-self:center}
+body[data-mode=discover] .location-status{top:auto;bottom:calc(138px + env(safe-area-inset-bottom));left:16px;right:16px;text-align:center}
+body[data-mode=discover] .maplibregl-ctrl-bottom-right,body[data-mode=discover] .maplibregl-ctrl-bottom-left{bottom:calc(92px + env(safe-area-inset-bottom))}
+body[data-mode=discover] .maplibregl-ctrl-top-left{top:calc(100px + env(safe-area-inset-top))}
+.bottom-nav button.active span{padding:1px 9px;border-radius:999px}
+
+/* 行程卡片 左滑删除层 默认完全隐藏 */
+body .swipe-cell .app-card{background-color:#fff}
+body .swipe-cell .swipe-delete{opacity:0;pointer-events:none;background:#ef4444;color:#fff;transition:opacity .2s}
+body .swipe-cell:has(.app-card[style*="translateX(-"]) .swipe-delete{opacity:1;pointer-events:auto}
+
+/* 我的 页面 改成清晰的入口列表 */
+body #my-view .my-stage.my-stage{display:flex;flex-direction:column;align-items:center;height:auto;min-height:0!important;overflow:visible;padding:0 2px calc(130px + env(safe-area-inset-bottom))}
+body #my-view .my-stage.my-stage .station{width:240px;height:240px;margin:0 auto 18px;position:relative;flex:none}
+body #my-view .my-stage .my-card.my-card{position:static!important;transform:none!important;left:auto!important;right:auto!important;top:auto!important;bottom:auto!important;width:100%!important;max-width:520px;height:auto!important;display:flex!important;align-items:center;gap:14px;padding:16px 18px!important;margin:0 0 12px;border:1px solid #ececf4!important;border-radius:20px!important;background:#fff!important;box-shadow:0 8px 22px #5d55a60f!important;text-align:left}
+body #my-view .my-stage .my-card.my-card h3{flex:1;margin:0!important;font-size:19px!important;color:#1d2145!important;font-weight:600!important}
+body #my-view .my-stage .my-card.my-card .row-ic{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:#efeefc;color:#5d55a6;flex:none}
+body #my-view .my-stage .my-card.my-card .row-ic .ic{width:21px;height:21px}
+body #my-view .my-stage .my-card.my-card .row-go{width:18px;height:18px;color:#a3a6b5;flex:none}
+body #my-view .my-stage.my-stage .station{position:relative!important;left:auto!important;top:auto!important;transform:none!important;width:230px!important;height:230px!important;margin:6px auto 26px!important}
+body #my-view .my-stage.my-stage .station-image{width:100%!important;height:100%!important}

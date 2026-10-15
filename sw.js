@@ -1,9 +1,12 @@
-const VERSION = 'rensheng-yicheng-v10';
+const VERSION = 'rensheng-yicheng-v12';
 const APP_SHELL = [
   './',
   './index.html',
   './app-core.js',
   './ui-theme-v3.css',
+  './motion.css',
+  './china-coords.js',
+  './discover-fast.js',
   './manifest.webmanifest',
   './icons/icon-192-v5.png',
   './icons/icon-512-v5.png',
@@ -41,11 +44,13 @@ self.addEventListener('fetch', event => {
     }).catch(() => caches.match('./index.html')));
     return;
   }
-  event.respondWith(caches.match(request).then(cached => cached || fetch(request).then(response => {
-    if (response.ok) {
-      const copy = response.clone();
-      caches.open(VERSION).then(cache => cache.put(request, copy));
-    }
+  const refresh = () => fetch(request).then(response => {
+    if (response.ok) { const copy = response.clone(); caches.open(VERSION).then(cache => cache.put(request, copy)); }
     return response;
-  })));
+  });
+  event.respondWith(caches.match(request).then(cached => {
+    if (!cached) return refresh();
+    event.waitUntil(refresh().catch(() => {}));
+    return cached;
+  }));
 });
