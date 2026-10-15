@@ -16,9 +16,9 @@ function load(){
   window._AMapSecurityConfig={securityJsCode:CFG.securityJsCode};
   loading=new Promise(function(res,rej){
     var s=document.createElement('script'),t=setTimeout(function(){rej(new Error('timeout'));},9000);
-    s.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(CFG.key)+'&plugin=AMap.PlaceSearch,AMap.Geocoder,AMap.Driving';
+    s.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(CFG.key)+'&plugin=AMap.PlaceSearch,AMap.Geocoder,AMap.Driving,AMap.Walking';
     s.async=true;
-    s.onload=function(){clearTimeout(t);if(window.AMap&&AMap.plugin)AMap.plugin(['AMap.PlaceSearch','AMap.Geocoder','AMap.Driving'],function(){res(window.AMap);});else rej(new Error('no AMap'));};
+    s.onload=function(){clearTimeout(t);if(window.AMap&&AMap.plugin)AMap.plugin(['AMap.PlaceSearch','AMap.Geocoder','AMap.Driving','AMap.Walking'],function(){res(window.AMap);});else rej(new Error('no AMap'));};
     s.onerror=function(){clearTimeout(t);rej(new Error('script error'));};
     document.head.appendChild(s);
   }).catch(function(e){loading=null;disable('load:'+e.message,10*60*1000);throw e;});
@@ -83,6 +83,17 @@ function drive(a,b){
     d.search(new AMap.LngLat(ga[0],ga[1]),new AMap.LngLat(gb[0],gb[1]),function(status,result){settle(status,result,function(r){var rt=r&&r.routes&&r.routes[0];res(rt?{duration:+rt.time,distance:+rt.distance}:null);}).catch(rej);});
     setTimeout(function(){rej(new Error('drive timeout'));},12000);});});});
 }
+
+/* 路线 返回耗时 距离 与沿路折线 折线坐标为高德坐标 */
+function route(a,b,mode){
+  var ga=toGcj(a[0],a[1]),gb=toGcj(b[0],b[1]);
+  return load().then(function(AMap){return queue(function(){return new Promise(function(res,rej){
+    var r=mode==='walk'?new AMap.Walking({}):new AMap.Driving({policy:AMap.DrivingPolicy?AMap.DrivingPolicy.LEAST_TIME:0});
+    r.search(new AMap.LngLat(ga[0],ga[1]),new AMap.LngLat(gb[0],gb[1]),function(status,result){settle(status,result,function(x){
+      var rt=x&&x.routes&&x.routes[0];if(!rt)return res(null);var path=[];(rt.steps||[]).forEach(function(st){(st.path||[]).forEach(function(p){var c=ll(p);if(c)path.push(c);});});
+      res({duration:+rt.time,distance:+rt.distance,path:path});}).catch(rej);});
+    setTimeout(function(){rej(new Error('route timeout'));},12000);});});});
+}
 /* 把 Nominatim 请求转成高德请求 其余代码无需改动 */
 function nominatimShape(item){
   var c=ll(item.location)||[0,0],w=toWgs(c[0],c[1]),prov=item.pname||(item.addressComponent&&item.addressComponent.province)||'',city=item.cityname||'',dist=item.adname||'';
@@ -127,6 +138,6 @@ function hook(){
   };
 }
 hook();
-window.AmapKit={usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
+window.AmapKit={route:route,usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
 if(enabled)setTimeout(function(){if(!window.MapCoord||window.MapCoord.useAmap)load().catch(function(){});},700);
 })();

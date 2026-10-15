@@ -71,3 +71,57 @@ body #my-view .my-stage .my-card.my-card .row-ic .ic{width:21px;height:21px}
 body #my-view .my-stage .my-card.my-card .row-go{width:18px;height:18px;color:#a3a6b5;flex:none}
 body #my-view .my-stage.my-stage .station{position:relative!important;left:auto!important;top:auto!important;transform:none!important;width:230px!important;height:230px!important;margin:6px auto 26px!important}
 body #my-view .my-stage.my-stage .station-image{width:100%!important;height:100%!important}
+
+/* 点赞与收藏按钮 PulseHeart */
+.pulse-heart{--ph-size:24px;--ph-corner:32px;--ph-pill:#f1effb;--ph-idle:#9a98ad;--ph-liked:#ff4d6d;--ph-text:#2b2a4a;--ph-roll:350ms;--ph-stroke:1.5px;--ph-ease-out:cubic-bezier(.23,1,.32,1);position:relative;display:inline-flex;align-items:center;justify-content:center;margin:0;padding:0;border:0;border-radius:var(--ph-corner);background:none;color:var(--ph-text);font-family:inherit;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;outline:none;transition:transform 160ms var(--ph-ease-out)}
+.pulse-heart[data-pressed]{transform:scale(.97)}
+.pulse-heart:focus-visible{outline:2px solid color-mix(in srgb,var(--ph-liked) 60%,transparent);outline-offset:3px}
+.pulse-heart__pill{display:inline-flex;align-items:center;gap:calc(var(--ph-size)*.25);padding:calc(var(--ph-size)*.3);padding-inline-end:calc(var(--ph-size)*.4);border-radius:var(--ph-corner);background:var(--ph-pill);transform-origin:center}
+.pulse-heart[data-no-count] .pulse-heart__pill{padding-inline-end:calc(var(--ph-size)*.3)}
+.pulse-heart__heart{display:block;width:var(--ph-size);height:var(--ph-size);color:var(--ph-idle);transform-origin:center;transition:color 160ms ease}
+.pulse-heart__heart svg{display:block;width:100%;height:100%;overflow:visible;fill:none;stroke:currentColor;stroke-width:var(--ph-stroke);stroke-linecap:round;stroke-linejoin:round}
+.pulse-heart[data-solid] .pulse-heart__heart svg,.pulse-heart[data-liked=true] .pulse-heart__heart svg{fill:currentColor}
+.pulse-heart[data-liked=true] .pulse-heart__heart{color:var(--ph-liked)}
+.pulse-heart[data-running] .pulse-heart__heart{transition:none}
+@media(hover:hover) and (pointer:fine){.pulse-heart:not([data-liked=true]):hover .pulse-heart__heart{color:color-mix(in srgb,var(--ph-idle) 45%,var(--ph-liked))}}
+.pulse-heart__count{display:inline-flex;font-size:calc(var(--ph-size)*.5);font-weight:600;line-height:1;letter-spacing:-.1px;font-variant-numeric:tabular-nums;color:var(--ph-text)}
+.pulse-heart__count>span{display:block;height:1em}
+.pulse-heart__slot{position:relative;overflow:hidden}
+.pulse-heart__roll{display:flex;flex-direction:column;transition:transform var(--ph-roll) var(--ph-ease-out)}
+.pulse-heart__roll>span{display:block;height:1em;line-height:1}
+@media(pointer:coarse){.pulse-heart{min-width:44px;min-height:44px}}
+.pulse-heart:hover,.pulse-heart:active{transform:none}
+.pulse-heart[data-pressed]{transform:scale(.97)}
+.social-actions{display:flex;align-items:center;gap:10px}
+.pulse-slot{display:inline-flex}
+@media(prefers-reduced-motion:reduce){.pulse-heart{transition:none}.pulse-heart__roll{transition:none}}
+
+/* 路线地图 */
+.route-map-btn{display:inline-flex;align-items:center;gap:8px;margin:10px 0 4px;padding:10px 16px;border:0;border-radius:999px;background:linear-gradient(120deg,#a78bfa,#93c5fd);color:#fff;font:inherit;font-weight:600;font-size:14px;box-shadow:0 8px 20px rgba(124,106,230,.25)}
+.route-map-btn .ic{width:18px;height:18px}
+.route-overlay{position:fixed;inset:0;z-index:3000;display:flex;flex-direction:column;background:#fbfbfe;opacity:0;visibility:hidden;transform:translateY(28px) scale(.985);transition:opacity .3s var(--ease),transform .38s var(--ease),visibility 0s .38s}
+.route-overlay.open{opacity:1;visibility:visible;transform:none;transition:opacity .3s var(--ease),transform .38s var(--ease),visibility 0s}
+.route-head{display:flex;align-items:center;gap:10px;padding:calc(12px + env(safe-area-inset-top)) 14px 8px}
+.route-head b{flex:1;font-size:18px;color:#1d1f3a}
+.route-close{width:38px;height:38px;border:0;border-radius:50%;background:#efeefa;color:#4b4a7a;display:inline-flex;align-items:center;justify-content:center}
+.route-mode{display:inline-flex;background:#efeefa;border-radius:999px;padding:3px}
+.route-mode button{border:0;background:none;padding:6px 12px;border-radius:999px;font:inherit;font-size:13px;color:#6b6a8c}
+.route-mode button.on{background:#fff;color:#5b4fd6;box-shadow:0 2px 8px rgba(80,70,160,.15)}
+.route-days{display:flex;gap:8px;overflow-x:auto;padding:4px 14px 8px;scrollbar-width:none}
+.route-days::-webkit-scrollbar{display:none}
+.route-days button{flex:none;border:0;border-radius:999px;padding:7px 14px;background:#f1effb;color:#5f5e85;font:inherit;font-size:13px}
+.route-days button.on{background:#6f5ce6;color:#fff}
+.route-map{position:relative;flex:1;min-height:0;margin:0 12px;border-radius:22px;overflow:hidden;background:#f1f2f6}
+.route-legs{max-height:34vh;overflow:auto;padding:10px 14px calc(14px + env(safe-area-inset-bottom))}
+.leg-item{display:flex;align-items:center;gap:12px;padding:10px 12px;margin-bottom:8px;border-radius:16px;background:#fff;box-shadow:0 4px 14px rgba(60,50,120,.07);animation:riseIn .4s var(--ease) both}
+.leg-no{flex:none;min-width:38px;text-align:center;font-weight:700;font-size:13px;color:#6f5ce6;background:#efeefa;border-radius:10px;padding:6px 4px}
+.leg-item b{display:block;font-size:14px;color:#1d1f3a}
+.leg-item small{color:#7a7a95;font-size:12px}
+.leg-empty{padding:18px;text-align:center;color:#7a7a95;font-size:14px}
+.route-pin{width:30px;height:30px;border-radius:50% 50% 50% 8%;transform:rotate(-45deg);background:#6f5ce6;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 14px rgba(80,60,200,.35);border:2px solid #fff}
+.route-pin span{transform:rotate(45deg);font-weight:700;font-size:13px}
+.route-pin{animation:markerPop .5s var(--spring) both}
+.leg-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border-radius:999px;background:#fff;color:#3b3a66;font-size:12px;font-weight:600;box-shadow:0 4px 12px rgba(40,30,100,.2);white-space:nowrap;animation:popIn .3s var(--ease) both}
+.leg-badge .ic{width:13px;height:13px}
+body .social-actions .pulse-heart{border:0;background:none;box-shadow:none;padding:0;height:auto;min-height:44px;min-width:44px;width:auto;border-radius:var(--ph-corner);color:var(--ph-text)}
+body .social-actions .pulse-heart:hover{background:none;box-shadow:none}

@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v14';
+const VERSION = 'rensheng-yicheng-v15';
 const APP_SHELL = [
   './',
   './index.html',
@@ -10,6 +10,8 @@ const APP_SHELL = [
   './poi-source.js',
   './amap-config.js',
   './amap-kit.js',
+  './route-map.js',
+  './pulse-button.js',
   './manifest.webmanifest',
   './icons/icon-192-v5.png',
   './icons/icon-512-v5.png',
