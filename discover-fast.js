@@ -77,6 +77,7 @@ function tagIntro(tg){
   if(tg.opening_hours&&tg.opening_hours.length<=34)parts.push('营业时间 '+tg.opening_hours);
   return parts.join(' · ');
 }
+window.tagIntro=tagIntro;
 normalizeNearbyElements=function(elements,cityLabel,limit,knownNames){
   return elements.map(function(item){
     var tags=item.tags||{},category=nearbyCategory(tags),name=tags['name:zh']||tags.name,
@@ -132,4 +133,53 @@ loadVerifiedPlaceIntroForDetail=async function(place){
   else{var cat=(categories[place.c]||{}).name||'地点';place.t=[place.city,cat].filter(Boolean).join(' · ')+'。暂无公开介绍 可点击地图导航查看位置和周边';place.introSource='你的行程记录';}
   try{persistState();}catch(e){}
   var dv=document.getElementById('detail-view');if(dv&&dv.classList.contains('active'))openDetail(place.n);
+};
+
+/* 6 周边推荐 改用开源数据层 不强制标签 分级扩大范围 */
+loadNearbyPlaces=async function(lat,lng,cityLabel){
+  cityLabel=cityLabel||'附近';
+  var key=lat.toFixed(2)+','+lng.toFixed(2),recent=nearbyCacheForPosition({lat:lat,lng:lng});
+  if(discoverLoadedKey===key&&window.__nearbyRequest)return window.__nearbyRequest;
+  if(discoverLoadedKey===key&&recent&&recent.updatedAt&&Date.now()-recent.updatedAt<6*36e5&&(recent.places||[]).length>=20)return recent.places;
+  discoverLoadedKey=key;discoverOrigin={lat:lat,lng:lng};
+  var task=(async function(){
+    setStatus('正在查找附近地点');
+    var known=new Set(places.filter(function(p){return !p.dynamic&&!p.retired;}).map(function(p){return p.n;})),collected=[],replaced=false;
+    function add(list){
+      if(!list||!list.length)return;
+      if(!replaced){retireDynamicPlaces();replaced=true;}
+      list.forEach(function(x){if(known.has(x.n))return;known.add(x.n);var tg=x.tags||{};
+        var p={n:x.n,c:x.c,lat:x.lat,lng:x.lng,city:cityLabel,province:tg['addr:province']||'',district:tg['addr:district']||'',districtVerified:Boolean(tg['addr:district']),source:'公开地图资料',t:tagIntro(tg),dynamic:true,qualityScore:x.qualityScore};
+        p.i=places.length;places.push(p);collected.push(p);try{addPlaceMarker(p);}catch(e){}});
+      activeDiscoverCity=cityLabel;
+      try{localStorage.setItem('sy-nearby-cache',JSON.stringify({version:2,city:cityLabel,origin:{lat:lat,lng:lng},places:collected,updatedAt:Date.now()}));}catch(e){}
+      document.getElementById('place-count').textContent=places.length;renderDiscover('all');
+      setStatus('已找到'+collected.length+'个附近地点');
+    }
+    var near=PoiSource.around(lat,lng,{radii:[2500],want:1,limit:60,cap:150}),mid=PoiSource.around(lat,lng,{radii:[8000],want:1,limit:90,cap:300});
+    add(await near);add(await mid);
+    if(collected.length<25)add(await PoiSource.around(lat,lng,{radii:[25000],want:1,limit:90,cap:300}));
+    if(!collected.length){discoverLoadedKey='';setStatus(recent?'已保留上次的附近地点 更新暂时失败':'附近地点暂时无法获取 请检查网络后重试');}
+    return collected;
+  })();
+  window.__nearbyRequest=task;
+  try{return await task;}finally{if(window.__nearbyRequest===task)window.__nearbyRequest=null;}
+};
+
+/* 7 行程规划 地点读取改用开源数据层 并跳过逐个查介绍 */
+enrichPlanningCandidateIntros=async function(){try{persistState();}catch(e){}};
+loadPlanningDestinationPlaces=async function(){
+  var dest=(planningState.destination||'').trim(),city=dest.replace(/市$/,'');if(!city)return 0;
+  var existing=places.filter(function(p){return !p.retired&&String(p.city||'').replace(/市$/,'').indexOf(city)>=0;});
+  if(existing.length>=15){planningState.lookupCount=existing.length;planningState.lookupFailed=false;return existing.length;}
+  planningState.lookupFailed=false;
+  var geo=await PoiSource.geocode(dest);
+  if(!geo){planningState.lookupFailed=true;planningState.lookupCount=existing.length;return existing.length;}
+  var list=await PoiSource.around(geo.lat,geo.lng,{radii:[6000,15000,35000],want:30,limit:70,cap:300});
+  var names=new Set(places.map(function(p){return p.n;})),added=0;
+  list.forEach(function(x){if(names.has(x.n))return;names.add(x.n);var tg=x.tags||{};
+    var p={n:x.n,c:x.c,lat:x.lat,lng:x.lng,city:dest,province:'',custom:true,qualityScore:x.qualityScore,t:tagIntro(tg)||(dest+' · '+((categories[x.c]||{}).name||'地点'))};
+    p.i=places.length;places.push(p);try{addPlaceMarker(p);}catch(e){}added++;});
+  planningState.lookupCount=added+existing.length;planningState.lookupFailed=planningState.lookupCount===0;
+  return planningState.lookupCount;
 };

@@ -751,6 +751,9 @@
     enrichRestoredPlaces();renderNext();renderItinerary();updatePlanCopy();renderDiscover('all');showView('next');
     if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}});}
   </script>
+  <script src="./poi-source.js"></script>
+  <script src="./amap-config.js"></script>
+  <script src="./amap-kit.js"></script>
   <script src="./discover-fast.js"></script>
 </body>
 </html>

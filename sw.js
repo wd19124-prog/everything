@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v12';
+const VERSION = 'rensheng-yicheng-v14';
 const APP_SHELL = [
   './',
   './index.html',
@@ -7,6 +7,9 @@ const APP_SHELL = [
   './motion.css',
   './china-coords.js',
   './discover-fast.js',
+  './poi-source.js',
+  './amap-config.js',
+  './amap-kit.js',
   './manifest.webmanifest',
   './icons/icon-192-v5.png',
   './icons/icon-512-v5.png',
