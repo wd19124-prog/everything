@@ -141,19 +141,19 @@ loadNearbyPlaces=async function(lat,lng,cityLabel){
   var key=lat.toFixed(2)+','+lng.toFixed(2),recent=nearbyCacheForPosition({lat:lat,lng:lng});
   if(discoverLoadedKey===key&&window.__nearbyRequest)return window.__nearbyRequest;
   if(discoverLoadedKey===key&&recent&&recent.updatedAt&&Date.now()-recent.updatedAt<6*36e5&&(recent.places||[]).length>=20)return recent.places;
-  discoverLoadedKey=key;discoverOrigin={lat:lat,lng:lng};
+  discoverLoadedKey=key;discoverOrigin={lat:lat,lng:lng};window.__nearbyGen=(window.__nearbyGen||0)+1;var myGen=window.__nearbyGen;
   var task=(async function(){
     setStatus('正在查找附近地点');
     var known=new Set(places.filter(function(p){return !p.dynamic&&!p.retired;}).map(function(p){return p.n;})),collected=[],replaced=false;
     function add(list){
-      if(!list||!list.length)return;
+      if(myGen!==window.__nearbyGen||!list||!list.length)return;
       if(!replaced){retireDynamicPlaces();replaced=true;}
       list.forEach(function(x){if(known.has(x.n))return;known.add(x.n);var tg=x.tags||{};
         var p={n:x.n,c:x.c,lat:x.lat,lng:x.lng,city:cityLabel,province:tg['addr:province']||'',district:tg['addr:district']||'',districtVerified:Boolean(tg['addr:district']),source:'公开地图资料',t:tagIntro(tg),dynamic:true,qualityScore:x.qualityScore};
-        p.i=places.length;places.push(p);collected.push(p);try{addPlaceMarker(p);}catch(e){}});
+        p.i=places.length;places.push(p);collected.push(p);});
       activeDiscoverCity=cityLabel;
       try{localStorage.setItem('sy-nearby-cache',JSON.stringify({version:2,city:cityLabel,origin:{lat:lat,lng:lng},places:collected,updatedAt:Date.now()}));}catch(e){}
-      document.getElementById('place-count').textContent=places.length;renderDiscover('all');
+      document.getElementById('place-count').textContent=places.length;renderDiscover(window.__discoverFilter||'all');
       setStatus('已找到'+collected.length+'个附近地点');
     }
     var near=PoiSource.around(lat,lng,{radii:[2500],want:1,limit:60,cap:150}),mid=PoiSource.around(lat,lng,{radii:[8000],want:1,limit:90,cap:300});
@@ -183,3 +183,39 @@ loadPlanningDestinationPlaces=async function(){
   planningState.lookupCount=added+existing.length;planningState.lookupFailed=planningState.lookupCount===0;
   return planningState.lookupCount;
 };
+
+/* 8 地图标记 只显示精华地点 并保证一定出现 */
+window.__discoverFilter='all';
+var baseRender=renderDiscover;
+renderDiscover=function(filter){window.__discoverFilter=filter||'all';var r=baseRender(filter);try{syncMarkers();}catch(e){window.__markerErr=String(e&&e.message||e);}return r;};
+applyVisibility=function(){places.forEach(function(p){var m=markers[p.i];if(m)m.getElement().style.display=isVisible(p)?'':'none';});renderList();};
+function safeMarker(p){
+  try{addPlaceMarker(p);var m0=markers[p.i];if(m0&&m0.getElement().isConnected)return;}catch(e){window.__markerErr=String(e&&e.message||e);}
+  try{
+    var el=createPlaceMarkerElement(p),html;try{html=nearbyPopupHtml(p);}catch(x){html='<b>'+p.n+'</b>';}
+    var popup=new maplibregl.Popup({maxWidth:'290px'}).setHTML(html),m=new maplibregl.Marker({element:el,anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(popup).addTo(map);
+    markers[p.i]=m;(layers[p.c]||(layers[p.c]=[])).push(m);
+  }catch(x){window.__markerErr2=String(x&&x.message||x);}
+}
+function syncMarkers(){
+  var f=window.__discoverFilter||'all',allowed=f==='all'?null:(typeof discoverCategoryMap!=='undefined'&&discoverCategoryMap[f]||[f]);
+  var dyn=places.filter(function(p){return p.dynamic&&!p.retired&&p.city===activeDiscoverCity;});
+  var pool=dyn.filter(function(p){return !allowed||allowed.indexOf(p.c)>=0;});
+  var quota=allowed?{}:{nature:20,museum:7,history:7,district:5,food:12,leisure:7},keep=new Set(),cnt={};
+  pool.slice().sort(function(a,b){return (b.qualityScore||0)-(a.qualityScore||0);}).forEach(function(p){
+    var k=p.c;cnt[k]=cnt[k]||0;var q=allowed?40:(quota[k]||6);if(cnt[k]<q&&keep.size<(allowed?40:55)){cnt[k]++;keep.add(p);}});
+  dyn.forEach(function(p){
+    var m=markers[p.i],has=!!(m&&m.getElement().isConnected);
+    if(keep.has(p)){if(!has)safeMarker(p);else m.getElement().style.display='';}
+    else if(has){m.remove();}
+  });
+}
+window.syncMarkers=syncMarkers;
+map.on('idle',function(){try{if(document.body.dataset.mode==='discover')syncMarkers();}catch(e){}});
+
+/* 9 展开收起箭头保持矢量图标 */
+var CHEV={up:'<path d="m18 15-6-6-6 6"/>',down:'<path d="m6 9 6 6 6-6"/>'};
+function setChev(open){var t=document.getElementById('discover-sheet-toggle');if(!t)return;t.innerHTML='<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(open?CHEV.down:CHEV.up)+'</svg>';}
+var baseCollapse=collapseDiscoverSheet;
+collapseDiscoverSheet=function(){baseCollapse();setChev(false);try{syncMarkers();}catch(e){}};
+(function(){var t=document.getElementById('discover-sheet-toggle');if(t)t.addEventListener('click',function(){var open=document.getElementById('discover-sheet').classList.contains('open');setChev(open);if(!open){try{syncMarkers();}catch(e){}}});setChev(false);})();

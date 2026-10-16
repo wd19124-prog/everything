@@ -1,7 +1,7 @@
 /* route-map.js 行程路线地图 相邻地点之间的步行与驾车路线 逐段耗时 */
 (function(){
 'use strict';
-var ov,map,mapLoaded=false,markers=[],dayIdx=0,mode='auto',token=0,pending=null;
+var faceB,map,mapLoaded=false,markers=[],dayIdx=0,mode='auto',token=0,pending=null;
 function ic(p,c){return '<svg class="'+(c||'ic')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p+'</svg>';}
 var X='<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',ROUTE='<circle cx="6" cy="19" r="3"/><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15"/><circle cx="18" cy="5" r="3"/>',WALK='<circle cx="13" cy="4" r="1"/><path d="m9 20 3-6 3 2v6"/><path d="m6 8 6-1 3 4h3"/><path d="m12 7-2 7"/>',CAR='<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2"/><circle cx="7" cy="17" r="2"/><path d="M9 17h6"/><circle cx="17" cy="17" r="2"/>';
 function toDisp(lng,lat){return window.MapCoord?window.MapCoord.toMap(lng,lat):[lng,lat];}
@@ -9,12 +9,10 @@ function fmtDur(s){var m=Math.max(1,Math.round(s/60));if(m<60)return m+'分钟';
 function fmtDist(m){return m<1000?Math.round(m)+'米':(m/1000).toFixed(m<10000?1:0)+'公里';}
 function inChina(p){return window.MapCoord?!window.MapCoord.outOfChina(p.lng,p.lat):true;}
 function build(){
-  if(ov)return;ov=document.createElement('section');ov.id='route-overlay';ov.className='route-overlay';ov.setAttribute('aria-label','路线地图');
-  ov.innerHTML='<div class="route-head"><button type="button" class="route-close" aria-label="关闭">'+ic(X)+'</button><b>路线地图</b><div class="route-mode" role="group" aria-label="出行方式"><button type="button" data-mode="auto" class="on">自动</button><button type="button" data-mode="walk">步行</button><button type="button" data-mode="drive">驾车</button></div></div><div class="route-days"></div><div class="route-map" id="route-map"></div><div class="route-legs"></div>';
-  document.body.appendChild(ov);
-  ov.querySelector('.route-close').onclick=close;
-  ov.querySelectorAll('[data-mode]').forEach(function(b){b.onclick=function(){mode=b.dataset.mode;ov.querySelectorAll('[data-mode]').forEach(function(x){x.classList.toggle('on',x===b);});render();};});
-  ov.querySelector('.route-days').onclick=function(e){var b=e.target.closest('[data-i]');if(!b)return;dayIdx=+b.dataset.i;render();};
+  if(faceB)return;faceB=document.createElement('div');faceB.className='ab-face-b';
+  faceB.innerHTML='<div class="route-bar"><div class="route-days"></div><div class="route-mode" role="group" aria-label="出行方式"><button type="button" data-mode="auto" class="on">自动</button><button type="button" data-mode="walk">步行</button><button type="button" data-mode="drive">驾车</button></div></div><div class="route-map" id="route-map"></div><div class="route-legs"></div>';
+  faceB.querySelectorAll('[data-mode]').forEach(function(b){b.onclick=function(){mode=b.dataset.mode;faceB.querySelectorAll('[data-mode]').forEach(function(x){x.classList.toggle('on',x===b);});render();};});
+  faceB.querySelector('.route-days').onclick=function(e){var b=e.target.closest('[data-i]');if(!b)return;dayIdx=+b.dataset.i;render();};
 }
 function ensureMap(){
   if(map)return;
@@ -36,7 +34,7 @@ function pickKind(a,b){if(mode!=='auto')return mode;return distanceKm(a,b)<=1.5?
 function estimate(a,b,kind){var km=distanceKm(a,b)*1.3,sp=kind==='walk'?4.5:32;return {duration:km/sp*3600,distance:km*1000,est:true};}
 function setLegs(feats){var src=map&&map.getSource('legs');if(src)src.setData({type:'FeatureCollection',features:feats});}
 function render(){
-  var my=++token,d=itinerary[dayIdx],stops=stopsOf(d),days=ov.querySelector('.route-days'),legsBox=ov.querySelector('.route-legs');
+  var my=++token,d=itinerary[dayIdx],stops=stopsOf(d),days=faceB.querySelector('.route-days'),legsBox=faceB.querySelector('.route-legs');
   days.innerHTML=itinerary.map(function(x,i){return '<button type="button" data-i="'+i+'" class="'+(i===dayIdx?'on':'')+'">'+(x.label||'')+' '+String(x.date||'').slice(-5)+'</button>';}).join('');
   markers.forEach(function(m){m.remove();});markers=[];
   if(stops.length<2){legsBox.innerHTML='<div class="leg-empty">'+(stops.length?'这一天只有一个带位置的地点':'这一天还没有带位置的地点')+' 添加至少两个地点后可查看路线</div>';if(mapLoaded)setLegs([]);}
@@ -67,18 +65,42 @@ function render(){
   };
   if(mapLoaded)draw();else pending=draw;
 }
-function open(){
-  build();dayIdx=typeof currentDay==='function'?Math.max(0,currentDay()):0;if(dayIdx>=itinerary.length)dayIdx=0;
-  ov.classList.add('open');ensureMap();
-  setTimeout(function(){render();},mapLoaded?60:0);
+var face='a',busy=false,LIST='<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/>';
+function rootEl(){return document.getElementById('itinerary-content');}
+function reduced(){return window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;}
+function mountSwitch(r){
+  var h2=r.querySelector('.app-title');if(!h2||r.querySelector('.ab-head')||!r.querySelector('.timeline'))return false;
+  var row=document.createElement('div');row.className='ab-head';h2.replaceWith(row);row.appendChild(h2);
+  var sw=document.createElement('div');sw.className='ab-switch';sw.setAttribute('role','tablist');sw.dataset.face=face;
+  sw.innerHTML='<i class="ab-thumb"></i><button type="button" role="tab" data-ab="a" aria-selected="'+(face==='a')+'">'+ic(LIST)+'<span>行程</span></button><button type="button" role="tab" data-ab="b" aria-selected="'+(face==='b')+'">'+ic(ROUTE)+'<span>路线</span></button>';
+  row.appendChild(sw);return true;
 }
-function close(){if(ov)ov.classList.remove('open');}
+function applyFace(r){
+  r.classList.toggle('ab-b',face==='b');var sw=r.querySelector('.ab-switch');
+  if(sw){sw.dataset.face=face;sw.querySelectorAll('[data-ab]').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.ab===face));});}
+}
+function showB(r){
+  build();if(faceB.parentNode!==r)r.appendChild(faceB);
+  dayIdx=typeof currentDay==='function'?Math.max(0,currentDay()):dayIdx;if(dayIdx>=itinerary.length)dayIdx=0;
+  ensureMap();map.resize();render();
+}
+function visibleKids(r){return [].slice.call(r.children).filter(function(el){return !el.matches('.app-eyebrow,.ab-head,.itinerary-top')&&getComputedStyle(el).display!=='none';});}
+async function switchTo(next){
+  var r=rootEl();if(!r||busy||next===face)return;busy=true;
+  var anim=!reduced(),out=visibleKids(r);r.style.perspective='1000px';
+  if(anim)await Promise.all(out.map(function(el){el.style.transformOrigin='50% 0';return el.animate([{opacity:1,transform:'rotateX(0)'},{opacity:0,transform:'rotateX(-65deg) translateY(-8px)'}],{duration:190,easing:'cubic-bezier(.4,0,1,1)',fill:'forwards'}).finished.catch(function(){});}));
+  face=next;applyFace(r);if(face==='b')showB(r);
+  out.forEach(function(el){el.getAnimations().forEach(function(a){a.cancel();});});
+  if(anim)visibleKids(r).forEach(function(el){el.style.transformOrigin='50% 0';el.animate([{opacity:0,transform:'rotateX(65deg) translateY(8px)'},{opacity:1,transform:'none'}],{duration:340,easing:'cubic-bezier(.2,.8,.2,1)'});});
+  setTimeout(function(){r.style.perspective='';busy=false;},anim?360:0);
+}
 var base=renderItinerary;
 renderItinerary=function(){
   base.apply(this,arguments);
-  var picker=document.querySelector('#itinerary-content .day-picker');
-  if(picker&&!document.getElementById('open-route-map'))picker.insertAdjacentHTML('afterend','<button type="button" id="open-route-map" class="route-map-btn">'+ic(ROUTE)+'<span>路线地图</span></button>');
+  var r=rootEl();if(!r)return;
+  if(!mountSwitch(r)&&!r.querySelector('.ab-head')){face='a';r.classList.remove('ab-b');return;}
+  applyFace(r);if(face==='b')showB(r);
 };
-document.addEventListener('click',function(e){if(e.target.closest('#open-route-map'))open();});
-window.RouteMap={open:open,close:close};
+document.addEventListener('click',function(e){var b=e.target.closest('.ab-switch [data-ab]');if(b)switchTo(b.dataset.ab);});
+window.RouteMap={switchTo:switchTo};
 })();
