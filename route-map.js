@@ -35,7 +35,9 @@ function estimate(a,b,kind){var km=distanceKm(a,b)*1.3,sp=kind==='walk'?4.5:32;r
 function setLegs(feats){var src=map&&map.getSource('legs');if(src)src.setData({type:'FeatureCollection',features:feats});}
 function render(){
   var my=++token,d=itinerary[dayIdx],stops=stopsOf(d),days=faceB.querySelector('.route-days'),legsBox=faceB.querySelector('.route-legs');
-  days.innerHTML=itinerary.map(function(x,i){return '<button type="button" data-i="'+i+'" class="'+(i===dayIdx?'on':'')+'">'+(x.label||'')+' '+String(x.date||'').slice(-5)+'</button>';}).join('');
+  var valid=[];itinerary.forEach(function(x,i){if(x.events&&x.events.length)valid.push(i);});
+  if(valid.length&&valid.indexOf(dayIdx)<0){dayIdx=valid[0];d=itinerary[dayIdx];stops=stopsOf(d);}
+  days.innerHTML=valid.map(function(i){var x=itinerary[i];return '<button type="button" data-i="'+i+'" class="'+(i===dayIdx?'on':'')+'">'+String(x.date||'').replace(/^\d{4}年/,'')+'</button>';}).join('');
   markers.forEach(function(m){m.remove();});markers=[];
   if(stops.length<2){legsBox.innerHTML='<div class="leg-empty">'+(stops.length?'这一天只有一个带位置的地点':'这一天还没有带位置的地点')+' 添加至少两个地点后可查看路线</div>';if(mapLoaded)setLegs([]);}
   var draw=function(){
@@ -69,20 +71,22 @@ var face='a',busy=false,LIST='<line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x
 function rootEl(){return document.getElementById('itinerary-content');}
 function reduced(){return window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;}
 function mountSwitch(r){
-  var h2=r.querySelector('.app-title');if(!h2||r.querySelector('.ab-head')||!r.querySelector('.timeline'))return false;
-  var row=document.createElement('div');row.className='ab-head';h2.replaceWith(row);row.appendChild(h2);
+  var top=r.querySelector('.itinerary-top');if(!top||!r.querySelector('.timeline'))return false;
+  if(top.querySelector('.ab-switch'))return true;
   var sw=document.createElement('div');sw.className='ab-switch';sw.setAttribute('role','tablist');sw.dataset.face=face;
   sw.innerHTML='<i class="ab-thumb"></i><button type="button" role="tab" data-ab="a" aria-selected="'+(face==='a')+'">'+ic(LIST)+'<span>行程</span></button><button type="button" role="tab" data-ab="b" aria-selected="'+(face==='b')+'">'+ic(ROUTE)+'<span>路线</span></button>';
-  row.appendChild(sw);return true;
+  var sp=document.createElement('span');sp.className='ab-spacer';top.classList.add('ab-on');top.insertBefore(sp,top.firstChild);top.insertBefore(sw,sp.nextSibling);return true;
 }
 function applyFace(r){
   r.classList.toggle('ab-b',face==='b');var sw=r.querySelector('.ab-switch');
   if(sw){sw.dataset.face=face;sw.querySelectorAll('[data-ab]').forEach(function(b){b.setAttribute('aria-selected',String(b.dataset.ab===face));});}
 }
+function fitHeight(){if(!faceB||!faceB.isConnected)return;var nav=document.querySelector('.bottom-nav'),navTop=nav?nav.getBoundingClientRect().top:innerHeight,top=faceB.getBoundingClientRect().top;faceB.style.height=Math.max(300,Math.floor(navTop-top-10))+'px';if(map)map.resize();}
+window.addEventListener('resize',fitHeight);
 function showB(r){
   build();if(faceB.parentNode!==r)r.appendChild(faceB);
   dayIdx=typeof currentDay==='function'?Math.max(0,currentDay()):dayIdx;if(dayIdx>=itinerary.length)dayIdx=0;
-  ensureMap();map.resize();render();
+  fitHeight();ensureMap();map.resize();render();setTimeout(fitHeight,420);
 }
 function visibleKids(r){return [].slice.call(r.children).filter(function(el){return !el.matches('.app-eyebrow,.ab-head,.itinerary-top')&&getComputedStyle(el).display!=='none';});}
 async function switchTo(next){
@@ -98,7 +102,7 @@ var base=renderItinerary;
 renderItinerary=function(){
   base.apply(this,arguments);
   var r=rootEl();if(!r)return;
-  if(!mountSwitch(r)&&!r.querySelector('.ab-head')){face='a';r.classList.remove('ab-b');return;}
+  if(!mountSwitch(r)){face='a';r.classList.remove('ab-b');return;}
   applyFace(r);if(face==='b')showB(r);
 };
 document.addEventListener('click',function(e){var b=e.target.closest('.ab-switch [data-ab]');if(b)switchTo(b.dataset.ab);});

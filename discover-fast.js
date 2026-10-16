@@ -138,7 +138,7 @@ loadVerifiedPlaceIntroForDetail=async function(place){
 /* 6 周边推荐 改用开源数据层 不强制标签 分级扩大范围 */
 loadNearbyPlaces=async function(lat,lng,cityLabel){
   cityLabel=cityLabel||'附近';
-  var key=lat.toFixed(2)+','+lng.toFixed(2),recent=nearbyCacheForPosition({lat:lat,lng:lng});
+  var key=lat.toFixed(3)+','+lng.toFixed(3),recent=nearbyCacheForPosition({lat:lat,lng:lng});
   if(discoverLoadedKey===key&&window.__nearbyRequest)return window.__nearbyRequest;
   if(discoverLoadedKey===key&&recent&&recent.updatedAt&&Date.now()-recent.updatedAt<6*36e5&&(recent.places||[]).length>=20)return recent.places;
   discoverLoadedKey=key;discoverOrigin={lat:lat,lng:lng};window.__nearbyGen=(window.__nearbyGen||0)+1;var myGen=window.__nearbyGen;
@@ -156,9 +156,9 @@ loadNearbyPlaces=async function(lat,lng,cityLabel){
       document.getElementById('place-count').textContent=places.length;renderDiscover(window.__discoverFilter||'all');
       setStatus('已找到'+collected.length+'个附近地点');
     }
-    var near=PoiSource.around(lat,lng,{radii:[2500],want:1,limit:60,cap:150}),mid=PoiSource.around(lat,lng,{radii:[8000],want:1,limit:90,cap:300});
+    var R=window.__discoverRadii||[2500,8000],near=PoiSource.around(lat,lng,{radii:[R[0]],want:1,limit:60,cap:150}),mid=PoiSource.around(lat,lng,{radii:[R[1]],want:1,limit:90,cap:300});
     add(await near);add(await mid);
-    if(collected.length<25)add(await PoiSource.around(lat,lng,{radii:[25000],want:1,limit:90,cap:300}));
+    if(collected.length<25)add(await PoiSource.around(lat,lng,{radii:[Math.min(50000,R[1]*3)],want:1,limit:90,cap:300}));
     if(!collected.length){discoverLoadedKey='';setStatus(recent?'已保留上次的附近地点 更新暂时失败':'附近地点暂时无法获取 请检查网络后重试');}
     return collected;
   })();
@@ -204,6 +204,8 @@ function syncMarkers(){
   var quota=allowed?{}:{nature:20,museum:7,history:7,district:5,food:12,leisure:7},keep=new Set(),cnt={};
   pool.slice().sort(function(a,b){return (b.qualityScore||0)-(a.qualityScore||0);}).forEach(function(p){
     var k=p.c;cnt[k]=cnt[k]||0;var q=allowed?40:(quota[k]||6);if(cnt[k]<q&&keep.size<(allowed?40:55)){cnt[k]++;keep.add(p);}});
+  var cap=allowed?40:55;
+  if(keep.size<cap)pool.slice().sort(function(a,b){return (b.qualityScore||0)-(a.qualityScore||0);}).forEach(function(p){if(keep.size<cap&&!keep.has(p))keep.add(p);});
   dyn.forEach(function(p){
     var m=markers[p.i],has=!!(m&&m.getElement().isConnected);
     if(keep.has(p)){if(!has)safeMarker(p);else m.getElement().style.display='';}
@@ -219,3 +221,79 @@ function setChev(open){var t=document.getElementById('discover-sheet-toggle');if
 var baseCollapse=collapseDiscoverSheet;
 collapseDiscoverSheet=function(){baseCollapse();setChev(false);try{syncMarkers();}catch(e){}};
 (function(){var t=document.getElementById('discover-sheet-toggle');if(t)t.addEventListener('click',function(){var open=document.getElementById('discover-sheet').classList.contains('open');setChev(open);if(!open){try{syncMarkers();}catch(e){}}});setChev(false);})();
+
+/* 10 地图拖动后 自动加载新地图中心周围的地点 */
+(function(){
+  var lastCenter=null,lastZoom=0,timer=0,base=showNearbyForPosition;
+  showNearbyForPosition=function(pos){window.__discoverRadii=null;lastCenter=null;return base(pos);};
+  function centerWgs(){var c=map.getCenter(),w=(window.MapCoord&&MapCoord.useAmap&&window.AmapKit)?AmapKit.toWgs(c.lng,c.lat):[c.lng,c.lat];return {lng:w[0],lat:w[1]};}
+  function onMoved(){
+    if(document.body.dataset.mode!=='discover')return;
+    var w=centerWgs(),z=map.getZoom(),R=z>=15?[1200,3500]:z>=13.5?[2000,6000]:z>=12?[3000,9000]:[6000,18000];
+    var base0=lastCenter||discoverOrigin||userPosition;
+    if(base0&&distanceKm(base0,w)<Math.max(0.8,R[0]/1000*.7)&&Math.abs(z-lastZoom)<1.2)return;
+    lastCenter=w;lastZoom=z;window.__discoverRadii=R;
+    setStatus('正在更新这片区域的地点');
+    loadNearbyPlaces(w.lat,w.lng,activeDiscoverCity||'附近');
+  }
+  map.on('moveend',function(e){if(!e||!e.originalEvent)return;clearTimeout(timer);timer=setTimeout(onMoved,650);});
+})();
+
+/* 11 行程规划 生成按钮立即反馈 交通时间核实限时 地点读取更快 */
+function busy(text){var el=document.getElementById('busy-toast');if(!el){el=document.createElement('div');el.id='busy-toast';el.className='busy-toast';el.innerHTML='<i></i><span></span>';document.body.appendChild(el);}el.querySelector('span').textContent=text;el.classList.add('show');}
+function unbusy(){var el=document.getElementById('busy-toast');if(el)el.classList.remove('show');}
+function limit(p,ms,fb){return Promise.race([p,new Promise(function(r){setTimeout(function(){r(fb);},ms);})]);}
+[['estimateTravelTime','交通时间暂时无法核实'],['estimateFlightTime',null],['estimateTrainTravelTime','交通时间暂时无法核实']].forEach(function(pair){
+  var name=pair[0],fb=pair[1],orig;try{orig=eval(name);}catch(e){return;}
+  if(typeof orig!=='function')return;
+  var wrapped=async function(){busy('正在核实交通时间');try{return await limit(orig.apply(this,arguments),12000,fb);}finally{unbusy();}};
+  try{eval(name+'=wrapped');}catch(e){}
+});
+showPlanLoading=async function(){
+  var sheet=document.getElementById('plan-loading-sheet');
+  if(!sheet){sheet=document.createElement('section');sheet.id='plan-loading-sheet';sheet.className='trip-sheet planner-sheet';sheet.innerHTML='<div class="planner-loading"><h3>正在生成你的路线</h3><p>正在读取目标城市的具体地点资料</p><div class="footprints"><i></i><i></i><i></i><i></i></div></div>';document.body.appendChild(sheet);}
+  var msg=sheet.querySelector('p');sheet.classList.add('open');planningState.lookupFailed=false;planningState.lookupCount=0;
+  var t0=Date.now(),timer=setInterval(function(){var s=(Date.now()-t0)/1000;if(msg)msg.textContent=s<5?'正在读取目标城市的具体地点资料':s<12?'正在筛选值得去的地点':'正在整理路线顺序';},1200);
+  try{await limit(loadPlanningDestinationPlaces().catch(function(){return 0;}),25000,0);}finally{clearInterval(timer);}
+  var available=plannerDestinationPlaces();sheet.classList.remove('open');
+  if(!available.length){var info=window.__amapError?'（高德：'+window.__amapError+'）':'';alert('暂时没有读取到「'+planningState.destination+'」的具体地点'+info+' 请检查网络后重试');return;}
+  var plan=buildPlan();
+  if(!plan.length||!plan.some(function(d){return d.events&&d.events.length;})){alert('当前城市暂时没有足够的具体地点可用于规划 请更换城市或稍后重试');return;}
+  showPlanPreview(plan);
+};
+loadPlanningDestinationPlaces=async function(){
+  var dest=(planningState.destination||'').trim(),city=dest.replace(/市$/,'');if(!city)return 0;
+  var existing=places.filter(function(p){return !p.retired&&!p.dynamic&&String(p.city||'').replace(/市$/,'').indexOf(city)>=0;});
+  if(existing.length>=15){planningState.lookupCount=existing.length;planningState.lookupFailed=false;return existing.length;}
+  var geo=await PoiSource.geocode(dest);
+  if(!geo){planningState.lookupFailed=true;planningState.lookupCount=existing.length;return existing.length;}
+  var list=await PoiSource.around(geo.lat,geo.lng,{radii:[7000,18000,40000],want:24,limit:70,cap:300});
+  var names=new Set(places.filter(function(p){return !p.retired;}).map(function(p){return p.n;})),added=0;
+  list.forEach(function(x){if(names.has(x.n))return;names.add(x.n);var tg=x.tags||{};
+    var p={n:x.n,c:x.c,lat:x.lat,lng:x.lng,city:dest,province:tg['addr:province']||'',district:tg['addr:district']||'',districtVerified:Boolean(tg['addr:district']),custom:true,qualityScore:x.qualityScore,t:tagIntro(tg)||(dest+' · '+((categories[x.c]||{}).name||'地点'))};
+    p.i=places.length;places.push(p);try{addPlaceMarker(p);}catch(e){}added++;});
+  planningState.lookupCount=added+existing.length;planningState.lookupFailed=planningState.lookupCount===0;
+  return planningState.lookupCount;
+};
+
+/* 12 添加行程 输入联想 全局搜索 不再使用发现页推荐地点 */
+var baseSuggestPlaces=searchPlaceSuggestions;
+searchPlaceSuggestions=function(){
+  var input=document.getElementById('new-name'),list=document.getElementById('place-suggestion-list');
+  if(!input||!list)return;
+  if(!(window.AmapKit&&AmapKit.usable()))return baseSuggestPlaces();
+  clearTimeout(suggestionTimer);
+  if(input.value.trim().length<1){list.classList.remove('open');list.innerHTML='';return;}
+  suggestionTimer=setTimeout(async function(){
+    var q=input.value.trim(),city=(document.getElementById('new-city')||{}).value||detectedCity||'';
+    try{
+      var tips=await AmapKit.suggest(q,city);if(input.value.trim()!==q)return;
+      var items=AmapKit.rank(q,tips).slice(0,8);
+      if(!items.length){list.classList.remove('open');list.innerHTML='';return;}
+      var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+      list.innerHTML=items.map(function(t,i){return '<button type="button" class="place-suggestion-item" data-suggestion-i="'+i+'">'+esc(t.name)+'<small>'+esc(t.district)+esc(Array.isArray(t.address)?'':t.address)+'</small></button>';}).join('');
+      list.classList.add('open');
+      list.querySelectorAll('[data-suggestion-i]').forEach(function(b){b.onclick=function(){var t=items[+b.dataset.suggestionI];AmapKit.remember(t);input.value=t.name;list.classList.remove('open');};});
+    }catch(e){baseSuggestPlaces();}
+  },220);
+};

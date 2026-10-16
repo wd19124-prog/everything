@@ -16,9 +16,9 @@ function load(){
   window._AMapSecurityConfig={securityJsCode:CFG.securityJsCode};
   loading=new Promise(function(res,rej){
     var s=document.createElement('script'),t=setTimeout(function(){rej(new Error('timeout'));},9000);
-    s.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(CFG.key)+'&plugin=AMap.PlaceSearch,AMap.Geocoder,AMap.Driving,AMap.Walking';
+    s.src='https://webapi.amap.com/maps?v=2.0&key='+encodeURIComponent(CFG.key)+'&plugin=AMap.PlaceSearch,AMap.Geocoder,AMap.Driving,AMap.Walking,AMap.AutoComplete';
     s.async=true;
-    s.onload=function(){clearTimeout(t);if(window.AMap&&AMap.plugin)AMap.plugin(['AMap.PlaceSearch','AMap.Geocoder','AMap.Driving','AMap.Walking'],function(){res(window.AMap);});else rej(new Error('no AMap'));};
+    s.onload=function(){clearTimeout(t);if(window.AMap&&AMap.plugin)AMap.plugin(['AMap.PlaceSearch','AMap.Geocoder','AMap.Driving','AMap.Walking','AMap.AutoComplete'],function(){res(window.AMap);});else rej(new Error('no AMap'));};
     s.onerror=function(){clearTimeout(t);rej(new Error('script error'));};
     document.head.appendChild(s);
   }).catch(function(e){loading=null;disable('load:'+e.message,10*60*1000);throw e;});
@@ -94,6 +94,32 @@ function route(a,b,mode){
       res({duration:+rt.time,distance:+rt.distance,path:path});}).catch(rej);});
     setTimeout(function(){rej(new Error('route timeout'));},12000);});});});
 }
+
+/* 输入联想 全局匹配 优先名称完全一致 再按前缀 再按包含 分店与商场内门店靠后 */
+var lastTips={};
+function suggest(q,city){
+  return load().then(function(AMap){return queue(function(){return new Promise(function(res,rej){
+    var ac=new AMap.AutoComplete({city:city||'全国',citylimit:!!city,datatype:'poi'});
+    ac.search(q,function(status,result){settle(status,result,function(r){res((r&&r.tips)||[]);}).catch(rej);});
+    setTimeout(function(){rej(new Error('suggest timeout'));},7000);});});});
+}
+function rank(q,tips){
+  var ql=String(q).toLowerCase();
+  return (tips||[]).filter(function(t){return t&&t.name&&ll(t.location);}).map(function(t,i){
+    var n=String(t.name).toLowerCase(),at=n.indexOf(ql),pi=n.search(/[(（]/),s=0;
+    if(n===ql)s=100;else if(at===0)s=80;else if(at>0)s=50;
+    if(at>0&&pi>=0&&at>pi)s-=35;
+    if(/^05/.test(String(t.typecode||''))&&at!==0)s-=10;
+    return {t:t,s:s,i:i};
+  }).sort(function(a,b){return b.s-a.s||a.i-b.i;}).map(function(o){return o.t;});
+}
+function remember(t){if(t&&t.name)lastTips[t.name]=t;}
+function parseDistrict(d){
+  d=String(d||'');var m=d.match(/^(北京市|上海市|天津市|重庆市|香港特别行政区|澳门特别行政区|.+?省|.+?自治区)?(.+?市|.+?自治州|.+?盟|.+?地区)?(.+?[区县旗市])?$/)||[];
+  var prov=m[1]||'',city=m[2]||'',dist=m[3]||'';
+  if(/^(北京市|上海市|天津市|重庆市)/.test(d)){prov=d.slice(0,3);city=prov;dist=d.slice(3);}
+  return {prov:prov,city:city,dist:dist};
+}
 /* 把 Nominatim 请求转成高德请求 其余代码无需改动 */
 function nominatimShape(item){
   var c=ll(item.location)||[0,0],w=toWgs(c[0],c[1]),prov=item.pname||(item.addressComponent&&item.addressComponent.province)||'',city=item.cityname||'',dist=item.adname||'';
@@ -102,7 +128,8 @@ function nominatimShape(item){
 async function handleSearch(u){
   var q=(u.searchParams.get('q')||'').trim();if(!q)return null;
   var tk=q.split(/\s+/),kw=tk[0],city=(tk[1]&&/[市州盟县区]$/.test(tk[1]))?tk[1]:'';if(tk.length>1&&!city)kw=q;
-  var out=[],lim=Math.min(+u.searchParams.get('limit')||8,10);
+  var out=[],lim=Math.min(+u.searchParams.get('limit')||8,10),tip=lastTips[kw]||lastTips[q];
+  if(tip){var pd=parseDistrict(tip.district);out.push(nominatimShape({name:tip.name,address:String(tip.address||''),location:tip.location,pname:pd.prov,cityname:pd.city,adname:pd.dist}));}
   try{var g=await geocode(city?kw+' '+city:q,city||undefined);if(g&&g.x){var x=g.x,ac=x.addressComponent||{};out.push(nominatimShape({name:kw,address:x.formattedAddress,location:x.location,pname:ac.province,cityname:Array.isArray(ac.city)?'':ac.city,adname:ac.district}));}}catch(e){if(!usable())return null;}
   try{var pois=await search({city:city||'全国',citylimit:!!city,pageSize:lim},null,0,kw);(pois||[]).forEach(function(p){if(ll(p.location))out.push(nominatimShape(p));});}catch(e){}
   var seen={},res=out.filter(function(x){var k=x.name+x.lat.slice(0,6);if(seen[k])return false;seen[k]=1;return true;}).slice(0,lim);
@@ -132,12 +159,12 @@ function hook(){
   var P=window.PoiSource;if(!P)return;var baseAround=P.around;
   P.around=async function(lat,lng,opt){
     if(usable()&&inChina(lng,lat)){
-      try{var a=await around(lat,lng,opt);if(a.length>=Math.min(10,(opt&&opt.want)||10))return a;var b=await baseAround(lat,lng,opt);return P.pick(a.concat(b),(opt&&opt.limit)||90);}catch(e){}
+      try{var a=await around(lat,lng,opt);if(a.length>=3)return a;var b=await baseAround(lat,lng,opt);return P.pick(a.concat(b),(opt&&opt.limit)||90);}catch(e){}
     }
     return baseAround(lat,lng,opt);
   };
 }
 hook();
-window.AmapKit={route:route,usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
+window.AmapKit={suggest:suggest,rank:rank,remember:remember,parseDistrict:parseDistrict,route:route,usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
 if(enabled)setTimeout(function(){if(!window.MapCoord||window.MapCoord.useAmap)load().catch(function(){});},700);
 })();

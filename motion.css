@@ -120,18 +120,26 @@ body .social-actions .pulse-heart{border:0;background:none;box-shadow:none;paddi
 body .social-actions .pulse-heart:hover{background:none;box-shadow:none}
 
 /* 行程页 A面 行程 与 B面 路线 切换 */
-.ab-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.ab-head .app-title{margin:0}
 .ab-switch{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;flex:none;background:#efeefa;border-radius:999px;padding:3px}
 .ab-switch button{position:relative;z-index:1;display:inline-flex;align-items:center;justify-content:center;gap:5px;border:0;background:none;padding:8px 13px;border-radius:999px;font:inherit;font-size:13px;font-weight:600;color:#8180a6;transition:color .25s,transform .2s var(--spring)}
 .ab-switch button .ic{width:15px;height:15px}
 .ab-switch[data-face=a] [data-ab=a],.ab-switch[data-face=b] [data-ab=b]{color:#5b4fd6}
 .ab-thumb{position:absolute;z-index:0;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#fff;box-shadow:0 2px 10px rgba(80,70,160,.18);transition:transform .38s var(--spring)}
 .ab-switch[data-face=b] .ab-thumb{transform:translateX(100%)}
-.ab-face-b{display:none;flex-direction:column;gap:10px;height:calc(100dvh - 250px - env(safe-area-inset-bottom));min-height:340px;margin-top:10px}
-#itinerary-content.ab-b>*:not(.app-eyebrow):not(.ab-head):not(.itinerary-top):not(.ab-face-b){display:none!important}
+.ab-face-b{display:none;flex-direction:column;gap:10px;min-height:300px;margin-top:10px}
+#itinerary-content.ab-b>*:not(.app-eyebrow):not(.itinerary-top):not(.ab-face-b){display:none!important}
 #itinerary-content.ab-b>.ab-face-b{display:flex}
 .route-bar{display:flex;align-items:center;gap:8px}
 .route-bar .route-days{flex:1;min-width:0;padding:0}
 .ab-face-b .route-map{margin:0;flex:1;min-height:0}
-.ab-face-b .route-legs{max-height:30%;padding:0}
+.ab-face-b .route-legs{flex:0 0 auto;max-height:38%;padding:0 0 4px}
+
+body .itinerary-top.ab-on{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px}
+.itinerary-top.ab-on .app-title{display:none}
+.itinerary-top.ab-on .add-trip-button{justify-self:end}
+.ab-spacer{display:block}
+/* 忙碌提示 */
+.busy-toast{position:fixed;left:50%;bottom:calc(120px + env(safe-area-inset-bottom));z-index:3500;display:flex;align-items:center;gap:10px;padding:11px 18px;border-radius:999px;background:rgba(30,28,60,.92);color:#fff;font-size:14px;opacity:0;transform:translate(-50%,12px) scale(.96);pointer-events:none;transition:opacity .25s var(--ease),transform .3s var(--spring)}
+.busy-toast.show{opacity:1;transform:translate(-50%,0) scale(1)}
+.busy-toast i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
