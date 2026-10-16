@@ -58,7 +58,7 @@ async function around(lat,lng,opt){
   for(var i=0;i<radii.length;i++){
     var r=Math.min(50000,radii[i]);
     var lists=await Promise.all(TYPES.map(function(t){return search({type:t[0]},g,r).catch(function(e){if(!usable())throw e;return [];});}));
-    lists.forEach(function(l){(l||[]).forEach(function(p){all.push(toPlace(p));});});
+    lists.forEach(function(l){(l||[]).forEach(function(p,idx){var pl=toPlace(p);if(pl){pl.qualityScore+=Math.max(0,(30-idx)/30*3);all.push(pl);}});});
     var got=window.PoiSource.pick(all,limit);if(got.length>=want){return got;}
   }
   return window.PoiSource.pick(all,limit);
@@ -105,7 +105,7 @@ function suggest(q,city){
 }
 function rank(q,tips){
   var ql=String(q).toLowerCase();
-  return (tips||[]).filter(function(t){return t&&t.name&&ll(t.location);}).map(function(t,i){
+  return (tips||[]).filter(function(t){return t&&t.name;}).map(function(t,i){
     var n=String(t.name).toLowerCase(),at=n.indexOf(ql),pi=n.search(/[(（]/),s=0;
     if(n===ql)s=100;else if(at===0)s=80;else if(at>0)s=50;
     if(at>0&&pi>=0&&at>pi)s-=35;
@@ -129,7 +129,7 @@ async function handleSearch(u){
   var q=(u.searchParams.get('q')||'').trim();if(!q)return null;
   var tk=q.split(/\s+/),kw=tk[0],city=(tk[1]&&/[市州盟县区]$/.test(tk[1]))?tk[1]:'';if(tk.length>1&&!city)kw=q;
   var out=[],lim=Math.min(+u.searchParams.get('limit')||8,10),tip=lastTips[kw]||lastTips[q];
-  if(tip){var pd=parseDistrict(tip.district);out.push(nominatimShape({name:tip.name,address:String(tip.address||''),location:tip.location,pname:pd.prov,cityname:pd.city,adname:pd.dist}));}
+  if(tip&&ll(tip.location)){var pd=parseDistrict(tip.district);out.push(nominatimShape({name:tip.name,address:String(tip.address||''),location:tip.location,pname:pd.prov,cityname:pd.city,adname:pd.dist}));}
   try{var g=await geocode(city?kw+' '+city:q,city||undefined);if(g&&g.x){var x=g.x,ac=x.addressComponent||{};out.push(nominatimShape({name:kw,address:x.formattedAddress,location:x.location,pname:ac.province,cityname:Array.isArray(ac.city)?'':ac.city,adname:ac.district}));}}catch(e){if(!usable())return null;}
   try{var pois=await search({city:city||'全国',citylimit:!!city,pageSize:lim},null,0,kw);(pois||[]).forEach(function(p){if(ll(p.location))out.push(nominatimShape(p));});}catch(e){}
   var seen={},res=out.filter(function(x){var k=x.name+x.lat.slice(0,6);if(seen[k])return false;seen[k]=1;return true;}).slice(0,lim);
@@ -165,6 +165,6 @@ function hook(){
   };
 }
 hook();
-window.AmapKit={suggest:suggest,rank:rank,remember:remember,parseDistrict:parseDistrict,route:route,usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
+window.AmapKit={search:search,toPlace:toPlace,ll:ll,queue:queue,suggest:suggest,rank:rank,remember:remember,parseDistrict:parseDistrict,route:route,usable:usable,load:load,around:around,geocode:geocode,regeo:regeo,drive:drive,toWgs:toWgs,status:function(){return {enabled:enabled,error:window.__amapError||'',disabledUntil:disabledUntil};}};
 if(enabled)setTimeout(function(){if(!window.MapCoord||window.MapCoord.useAmap)load().catch(function(){});},700);
 })();

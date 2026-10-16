@@ -276,7 +276,7 @@ loadPlanningDestinationPlaces=async function(){
   return planningState.lookupCount;
 };
 
-/* 12 添加行程 输入联想 全局搜索 不再使用发现页推荐地点 */
+/* 12 添加行程 输入联想 全局搜索 更多候选 显示城市与区域 */
 var baseSuggestPlaces=searchPlaceSuggestions;
 searchPlaceSuggestions=function(){
   var input=document.getElementById('new-name'),list=document.getElementById('place-suggestion-list');
@@ -285,15 +285,29 @@ searchPlaceSuggestions=function(){
   clearTimeout(suggestionTimer);
   if(input.value.trim().length<1){list.classList.remove('open');list.innerHTML='';return;}
   suggestionTimer=setTimeout(async function(){
-    var q=input.value.trim(),city=(document.getElementById('new-city')||{}).value||detectedCity||'';
-    try{
-      var tips=await AmapKit.suggest(q,city);if(input.value.trim()!==q)return;
-      var items=AmapKit.rank(q,tips).slice(0,8);
+    var q=input.value.trim(),city=(document.getElementById('new-city')||{}).value||detectedCity||'',pool=[],seen={};
+    var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
+    function norm(t){
+      var pd=AmapKit.parseDistrict(t.district||''),prov=t.pname||pd.prov,cty=t.cityname||pd.city||prov,dist=t.adname||pd.dist;
+      var addr=Array.isArray(t.address)?'':String(t.address||'');
+      return {raw:t,name:String(t.name),city:cty,dist:dist,addr:addr,loc:AmapKit.ll(t.location)};
+    }
+    function render(){
+      if(input.value.trim()!==q)return;
+      var items=AmapKit.rank(q,pool.map(function(x){return x.raw;})).slice(0,10).map(norm);
       if(!items.length){list.classList.remove('open');list.innerHTML='';return;}
-      var esc=function(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');};
-      list.innerHTML=items.map(function(t,i){return '<button type="button" class="place-suggestion-item" data-suggestion-i="'+i+'">'+esc(t.name)+'<small>'+esc(t.district)+esc(Array.isArray(t.address)?'':t.address)+'</small></button>';}).join('');
+      list.innerHTML=items.map(function(t,i){return '<button type="button" class="place-suggestion-item" data-suggestion-i="'+i+'">'+esc(t.name)+'<small>'+esc([t.city,t.dist].filter(Boolean).join(' · '))+(t.addr?' · '+esc(t.addr):'')+'</small></button>';}).join('');
       list.classList.add('open');
-      list.querySelectorAll('[data-suggestion-i]').forEach(function(b){b.onclick=function(){var t=items[+b.dataset.suggestionI];AmapKit.remember(t);input.value=t.name;list.classList.remove('open');};});
+      list.querySelectorAll('[data-suggestion-i]').forEach(function(b){b.onclick=function(){var t=items[+b.dataset.suggestionI];AmapKit.remember(t.raw);input.value=t.name;list.classList.remove('open');};});
+    }
+    function merge(arr){(arr||[]).forEach(function(t){if(!t||!t.name)return;var k=t.name+'|'+(t.district||t.adname||'')+'|'+(AmapKit.ll(t.location)||[]).map(function(n){return n.toFixed(3);}).join(',');if(seen[k])return;seen[k]=1;pool.push({raw:t});});render();}
+    var scope=city,go=function(c){return Promise.all([
+      AmapKit.suggest(q,c).then(merge).catch(function(){}),
+      AmapKit.search({city:c||'全国',citylimit:!!c,pageSize:12},null,0,q).then(function(p){merge((p||[]).map(function(x){return Object.assign({},x,{district:''});}));}).catch(function(){})]);};
+    try{
+      await go(scope);
+      if(pool.length<6&&scope)await go('');
+      if(!pool.length)baseSuggestPlaces();
     }catch(e){baseSuggestPlaces();}
-  },220);
+  },150);
 };
