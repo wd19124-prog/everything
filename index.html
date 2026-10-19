@@ -162,6 +162,27 @@
   #detail-view .detail-head .back-button{display:inline-flex!important;align-items:center;min-height:38px;margin:0 0 12px;padding:5px 2px;color:#06105d;font-size:16px}
   @media (min-width:761px){#next-view,#itinerary-view,#detail-view,#my-view{padding:52px 40px 40px}#detail-view .detail-head{margin:-52px -40px 24px;padding:52px 40px 0}.bottom-nav{width:430px;right:28px;left:auto}}
   </style>
+<script>
+/* 启动自检 出错时显示错误 并自动清理缓存重试 */
+window.__errs=[];window.__SAFE=/[?&]safe=1/.test(location.search);
+window.addEventListener('error',function(e){if(!e.message)return;window.__errs.push(String(e.message)+' @'+String(e.filename||'').split('/').pop()+':'+(e.lineno||0));},true);
+window.addEventListener('unhandledrejection',function(e){window.__errs.push('promise: '+String(e.reason&&e.reason.message||e.reason));});
+window.__bootFailed=function(){
+  var tried=false;try{tried=sessionStorage.getItem('sy-recovered')==='1';}catch(x){}
+  if(!tried){
+    try{sessionStorage.setItem('sy-recovered','1');}catch(x){}
+    var jobs=[];if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)jobs.push(navigator.serviceWorker.getRegistrations().then(function(rs){return Promise.all(rs.map(function(r){return r.unregister();}));}));
+    if(window.caches)jobs.push(caches.keys().then(function(ks){return Promise.all(ks.map(function(k){return caches.delete(k);}));}));
+    Promise.all(jobs).catch(function(){}).then(function(){location.replace(location.pathname+'?r='+Date.now());});return;
+  }
+  var box=document.createElement('div');box.style.cssText='position:fixed;left:12px;right:12px;top:calc(12px + env(safe-area-inset-top));z-index:99999;background:#fff;border:1px solid #e3def8;border-radius:18px;padding:14px;box-shadow:0 12px 40px rgba(40,30,100,.25);font:13px/1.5 -apple-system,sans-serif;color:#1d1f3a';
+  var msg=(window.__errs.slice(0,4).join('\n')||'没有捕获到错误信息').replace(/</g,'&lt;');
+  box.innerHTML='<b style="font-size:15px">页面没有正常启动</b><pre style="white-space:pre-wrap;word-break:break-all;margin:8px 0;color:#b42318;font-size:12px">'+msg+'</pre><div style="display:flex;gap:8px"><button id="sy-retry" style="flex:1;border:0;border-radius:12px;padding:10px;background:#efeefa;color:#5b4fd6;font:inherit">重试</button><button id="sy-safe" style="flex:1;border:0;border-radius:12px;padding:10px;background:#6f5ce6;color:#fff;font:inherit">安全模式</button></div>';
+  document.body.appendChild(box);
+  document.getElementById('sy-retry').onclick=function(){try{sessionStorage.removeItem('sy-recovered');}catch(x){}location.replace(location.pathname+'?r='+Date.now());};
+  document.getElementById('sy-safe').onclick=function(){location.replace(location.pathname+'?safe=1&r='+Date.now());};
+};
+</script>
 </head>
 <body>
   <section id="next-view" class="app-view active" aria-label="下一项安排"><div class="app-inner" id="next-content"></div></section>
@@ -751,12 +772,7 @@
     enrichRestoredPlaces();renderNext();renderItinerary();updatePlanCopy();renderDiscover('all');showView('next');
     if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}});}
   </script>
-  <script src="./poi-source.js"></script>
-  <script src="./amap-config.js"></script>
-  <script src="./amap-kit.js"></script>
-  <script src="./pulse-button.js"></script>
-  <script src="./route-map.js"></script>
-  <script src="./discover-fast.js"></script>
-  <script src="./planner-plus.js"></script>
+  <script>if(!window.__SAFE){['poi-source','amap-config','amap-kit','pulse-button','route-map','discover-fast','planner-plus'].forEach(function(n){document.write('<script src="./'+n+'.js"><\/script>');});}</script>
+  <script>setTimeout(function(){var v=document.querySelector('.app-view.active'),ok=v&&String(v.innerText||'').trim().length>0&&typeof showView==='function';if(!ok&&window.__bootFailed)window.__bootFailed();else try{sessionStorage.removeItem('sy-recovered');}catch(x){}},2600);</script>
 </body>
 </html>
