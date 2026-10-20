@@ -47,7 +47,7 @@ function catOf(type,name){var s=type+' '+name;
   if(/度假|休闲|娱乐|洗浴|温泉|影剧院|游乐|水上乐园/.test(s))return 'leisure';
   return 'nature';}
 function toPlace(p){
-  var c=ll(p.location);if(!c||!p.name)return null;var w=toWgs(c[0],c[1]),type=String(p.type||''),segs=type.split(';'),rating=parseFloat(p.rating||(p.biz_ext&&p.biz_ext.rating)||0)||0,cost=p.cost||(p.biz_ext&&p.biz_ext.cost)||'';
+  var c=ll(p.location);if(!c||!p.name)return null;var w=toWgs(c[0],c[1]);if(!isFinite(w[0])||!isFinite(w[1]))return null;var type=String(p.type||''),segs=type.split(';'),rating=parseFloat(p.rating||(p.biz_ext&&p.biz_ext.rating)||0)||0,cost=p.cost||(p.biz_ext&&p.biz_ext.cost)||'';
   var cat=catOf(type,p.name),desc=[segs[segs.length-1],String(p.address||'').slice(0,22),rating?'评分'+rating:'',cost?'人均'+cost+'元':''].filter(Boolean).join(' · ').slice(0,78);
   var score=(rating?(rating-3)*3:0)+((p.photos&&p.photos.length)?1:0)+(p.tel?1:0)+(/风景名胜/.test(type)?3:0)+(/5A|4A/.test(p.name)?3:0);
   return {n:p.name,c:cat,lat:w[1],lng:w[0],qualityScore:Math.max(0,Math.round(score*10)/10),tags:{'description:zh':desc,'addr:province':p.pname||'','addr:district':p.adname||'',website:p.website||'',amap:'1'}};
@@ -122,7 +122,7 @@ function parseDistrict(d){
 }
 /* 把 Nominatim 请求转成高德请求 其余代码无需改动 */
 function nominatimShape(item){
-  var c=ll(item.location)||[0,0],w=toWgs(c[0],c[1]),prov=item.pname||(item.addressComponent&&item.addressComponent.province)||'',city=item.cityname||'',dist=item.adname||'';
+  var c=ll(item.location);if(!c)return null;var w=toWgs(c[0],c[1]),prov=item.pname||(item.addressComponent&&item.addressComponent.province)||'',city=item.cityname||'',dist=item.adname||'';
   return {lat:String(w[1]),lon:String(w[0]),name:item.name,display_name:[item.name,item.address,dist,city||prov,prov,'中国'].filter(Boolean).join(', '),type:'amap',class:'place',importance:.5,address:{road:String(item.address||''),city:city||prov,city_district:dist,district:dist,county:dist,state:prov,country:'中国'}};
 }
 async function handleSearch(u){
@@ -132,7 +132,7 @@ async function handleSearch(u){
   if(tip&&ll(tip.location)){var pd=parseDistrict(tip.district);out.push(nominatimShape({name:tip.name,address:String(tip.address||''),location:tip.location,pname:pd.prov,cityname:pd.city,adname:pd.dist}));}
   try{var g=await geocode(city?kw+' '+city:q,city||undefined);if(g&&g.x){var x=g.x,ac=x.addressComponent||{};out.push(nominatimShape({name:kw,address:x.formattedAddress,location:x.location,pname:ac.province,cityname:Array.isArray(ac.city)?'':ac.city,adname:ac.district}));}}catch(e){if(!usable())return null;}
   try{var pois=await search({city:city||'全国',citylimit:!!city,pageSize:lim},null,0,kw);(pois||[]).forEach(function(p){if(ll(p.location))out.push(nominatimShape(p));});}catch(e){}
-  var seen={},res=out.filter(function(x){var k=x.name+x.lat.slice(0,6);if(seen[k])return false;seen[k]=1;return true;}).slice(0,lim);
+  var seen={},res=out.filter(function(x){if(!x)return false;var k=x.name+x.lat.slice(0,6);if(seen[k])return false;seen[k]=1;return true;}).slice(0,lim);
   return res.length?res:null;
 }
 async function handleReverse(u){

@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v19';
+const VERSION = 'rensheng-yicheng-v20';
 const APP_SHELL = [
   './',
   './index.html',

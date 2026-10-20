@@ -164,7 +164,8 @@
   </style>
 <script>
 /* 启动自检 出错时显示错误 并自动清理缓存重试 */
-window.__errs=[];window.__SAFE=/[?&]safe=1/.test(location.search);
+window.__errs=[];try{var __raw=localStorage.getItem('sy-trip-state');if(__raw){var __s=JSON.parse(__raw),__ch=false;if(Array.isArray(__s.customPlaces)){var __n=__s.customPlaces.filter(function(p){return p&&p.lat!=null&&p.lng!=null&&isFinite(Number(p.lat))&&isFinite(Number(p.lng));});if(__n.length!==__s.customPlaces.length){__s.customPlaces=__n;__ch=true;}}if(__ch)localStorage.setItem('sy-trip-state',JSON.stringify(__s));}var __lp=JSON.parse(localStorage.getItem('sy-last-position')||'null');if(__lp&&(!isFinite(Number(__lp.lat))||!isFinite(Number(__lp.lng))||__lp.lat==null||__lp.lng==null))localStorage.removeItem('sy-last-position');}catch(e){}
+window.__SAFE=/[?&]safe=1/.test(location.search);
 window.addEventListener('error',function(e){if(!e.message)return;window.__errs.push(String(e.message)+' @'+String(e.filename||'').split('/').pop()+':'+(e.lineno||0));},true);
 window.addEventListener('unhandledrejection',function(e){window.__errs.push('promise: '+String(e.reason&&e.reason.message||e.reason));});
 window.__bootFailed=function(){
@@ -391,7 +392,7 @@ window.__bootFailed=function(){
     });
     function nearbyPopupRegion(place){if(!place?.dynamic)return TripAppCore.detailRegionLabel(place)||placeCity(place);const baseCity=placeCity({province:place.province||detectedProvince,city:place.city||activeDiscoverCity})||placeCity({province:detectedProvince,city:activeDiscoverCity});return TripAppCore.nearbyPlaceRegionLabel({...place,city:baseCity,district:place.districtVerified?place.district:'',districtVerified:place.districtVerified===true});}
     function nearbyPopupHtml(place){const category=categories[place.c]||categories.history,region=nearbyPopupRegion(place),nav=`${globalNavUrl(place.lng,place.lat,place.n)}`;return`<div class="popup-title">${place.n}</div><div class="popup-meta">${category.name}${region?` · ${region}`:''}</div><div>${place.t||'地点概况正在更新。'}</div><a class="navigate-link" href="${nav}" target="_blank" rel="noopener">在地图中导航</a>`;}
-    function addPlaceMarker(p){p.i=places.indexOf(p);const popup=new maplibregl.Popup({maxWidth:'290px'}).setHTML(nearbyPopupHtml(p)),marker=new maplibregl.Marker({element:createPlaceMarkerElement(p),anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(popup).addTo(map);popup.on('open',()=>{collapseDiscoverSheet();if(p.dynamic)ensurePlaceAddress(p).then(()=>popup.setHTML(nearbyPopupHtml(p)));});layers[p.c].push(marker);markers[p.i]=marker;}
+    function addPlaceMarker(p){if(!p||p.lat==null||p.lng==null||!Number.isFinite(Number(p.lat))||!Number.isFinite(Number(p.lng)))return;p.i=places.indexOf(p);const popup=new maplibregl.Popup({maxWidth:'290px'}).setHTML(nearbyPopupHtml(p)),marker=new maplibregl.Marker({element:createPlaceMarkerElement(p),anchor:'bottom'}).setLngLat([p.lng,p.lat]).setPopup(popup).addTo(map);popup.on('open',()=>{collapseDiscoverSheet();if(p.dynamic)ensurePlaceAddress(p).then(()=>popup.setHTML(nearbyPopupHtml(p)));});layers[p.c].push(marker);markers[p.i]=marker;}
     const legend=document.getElementById('legend');
     const filters=document.getElementById('filters');
     const mobileFilter=document.getElementById('mobile-filter');
@@ -409,7 +410,7 @@ window.__bootFailed=function(){
       if(!userPosition)return a.i-b.i;
       return distanceKm(userPosition,a)-distanceKm(userPosition,b);
     });
-    function applyVisibility(){places.forEach(p=>markers[p.i].getElement().style.display=isVisible(p)?'':'none');renderList();}
+    function applyVisibility(){places.forEach(p=>{const m=markers[p.i];if(m)m.getElement().style.display=isVisible(p)?'':'none';});renderList();}
     function renderList(){
       const rows=sortedVisiblePlaces().map(p=>`<div class="item" data-index="${p.i}"><strong><span class="swatch" style="background:${categories[p.c].color}"></span>${p.n}</strong><small>${categories[p.c].name}${userPosition?` · ${distanceKm(userPosition,p).toFixed(1)} km`:''} · ${p.t}</small></div>`).join('');
       document.getElementById('list').innerHTML=rows;
@@ -467,7 +468,7 @@ window.__bootFailed=function(){
     window.selectedDate='';
     const savedState=JSON.parse(localStorage.getItem('sy-trip-state')||'{}');
     if(savedState.itinerary)itinerary.splice(0,itinerary.length,...savedState.itinerary);
-    function restoreCustomPlaces(list){(list||[]).forEach(saved=>{if(!saved?.n||placeByName(saved.n))return;const place={...saved,custom:true,i:places.length};places.push(place);addPlaceMarker(place);});}
+    function restoreCustomPlaces(list){(list||[]).forEach(saved=>{if(!saved?.n||placeByName(saved.n))return;const la=Number(saved.lat),ln=Number(saved.lng);if(saved.lat==null||saved.lng==null||!Number.isFinite(la)||!Number.isFinite(ln))return;const place={...saved,lat:la,lng:ln,custom:true,i:places.length};places.push(place);try{addPlaceMarker(place);}catch(e){}});}
     restoreCustomPlaces(savedState.customPlaces);(function migrateOldPlaces(){const used=new Set();(savedState.itinerary||[]).forEach(d=>(d.events||[]).forEach(e=>used.add(e.name)));legacyPlaces.filter(x=>used.has(x.n)&&!placeByName(x.n)).forEach(x=>{const d=legacyDetails[x.n]||{},place={...x,price:d.price,book:d.book,custom:true,i:places.length};places.push(place);try{addPlaceMarker(place);}catch(e){}});})();
     if(savedState.customPlaces?.length)renderList();
     const checkedPlaces=savedState.checkedPlaces||{};
@@ -478,7 +479,7 @@ window.__bootFailed=function(){
     const followedUsers=savedState.followedUsers||{};
     const favoritePosts=savedState.favoritePosts||{};
     const likedPosts=savedState.likedPosts||{};
-    function persistState(){localStorage.setItem('sy-trip-state',JSON.stringify({itinerary,checkedPlaces,expenses,moveCounts,placePhotos,socialPosts,followedUsers,favoritePosts,likedPosts,customPlaces:places.filter(p=>p.custom)}));if(typeof schedulePush==='function'&&tripId)schedulePush();}
+    function persistState(){localStorage.setItem('sy-trip-state',JSON.stringify({itinerary,checkedPlaces,expenses,moveCounts,placePhotos,socialPosts,followedUsers,favoritePosts,likedPosts,customPlaces:places.filter(p=>p.custom&&Number.isFinite(Number(p.lat))&&Number.isFinite(Number(p.lng)))}));if(typeof schedulePush==='function'&&tripId)schedulePush();}
     function totalExpenses(){const totals={};Object.values(expenses).flat().forEach(x=>{totals[x.currency]=(totals[x.currency]||0)+Number(x.amount||0);});return Object.entries(totals).map(([k,v])=>`${k} ${v.toFixed(2)}`).join(' · ')||'暂无花销';}
     const SUPABASE_URL='https://grreewdbdqzfxenjjuar.supabase.co';
     const SUPABASE_KEY='sb_publishable_Q8kvl87FaNdIZESFy0utXg_7u2EzQTQ';
