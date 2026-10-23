@@ -11,7 +11,7 @@ var ICONS={
  star:'<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" vector-effect="non-scaling-stroke"/>'
 };
 function mount(host,o){
-  o=Object.assign({count:0,liked:false,icon:'heart',showCount:true,idleOutline:true,size:24,corner:32,likedColor:'#ff4d6d',idleColor:'#9a98ad',pillColor:'#f1effb',textColor:'#2b2a4a',duration:560,dotSize:.3,overshoot:1.7,beat:3,rollDuration:350,label:'点赞',onChange:null},o||{});
+  o=Object.assign({count:0,liked:false,icon:'heart',showCount:true,idleOutline:true,size:24,corner:32,likedColor:'#ff4d6d',idleColor:'#8e8e93',pillColor:'#f5f5f7',textColor:'#1c1c1e',duration:560,dotSize:.3,overshoot:1.7,beat:3,rollDuration:350,label:'点赞',onChange:null},o||{});
   var liked=!!o.liked,total=+o.count||0,shown={liked:liked,count:total},raf=0,rollTimer=0,viaPointer=false;
   var btn=document.createElement('button');btn.type='button';btn.className='pulse-heart';
   btn.setAttribute('aria-pressed',String(liked));btn.setAttribute('aria-label',o.label);

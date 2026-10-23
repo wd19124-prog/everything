@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v20';
+const VERSION = 'rensheng-yicheng-v21';
 const APP_SHELL = [
   './',
   './index.html',
@@ -12,6 +12,10 @@ const APP_SHELL = [
   './amap-kit.js',
   './route-map.js',
   './planner-plus.js',
+  './drawer.js',
+  './tips.js',
+  './place-info.js',
+  './theme-minimal.css',
   './pulse-button.js',
   './manifest.webmanifest',
   './icons/icon-192-v5.png',
