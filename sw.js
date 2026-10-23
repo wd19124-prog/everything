@@ -1,4 +1,4 @@
-const VERSION = 'rensheng-yicheng-v22';
+const VERSION = 'rensheng-yicheng-v23';
 const APP_SHELL = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const APP_SHELL = [
   './planner-plus.js',
   './drawer.js',
   './mono.js',
+  './panels.js',
   './tips.js',
   './place-info.js',
   './theme-minimal.css',

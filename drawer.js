@@ -8,6 +8,7 @@ var I={x:'<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',loc:'<circle cx="12" cy=
 var state={snap:'peek',mode:'list',place:null,dragging:false};
 /* 结构 */
 var handle=document.createElement('div');handle.className='drawer-handle';handle.innerHTML='<i></i>';sheet.insertBefore(handle,sheet.firstChild);
+var blur=document.createElement('div');blur.className='drawer-blur';sheet.appendChild(blur);
 var detail=document.createElement('div');detail.id='drawer-detail';detail.className='drawer-detail';sheet.appendChild(detail);
 var fab=document.createElement('button');fab.type='button';fab.id='drawer-fab';fab.className='drawer-fab';fab.setAttribute('aria-label','定位到我的位置');fab.innerHTML=ic(I.loc,22);document.body.appendChild(fab);
 var top=document.createElement('div');top.id='drawer-topbar';top.className='drawer-topbar';top.innerHTML='<button type="button" class="dt-city"><span>附近</span>'+ic(I.chev,18)+'</button><button type="button" class="dt-search" aria-label="搜索地点">'+ic(I.search,22)+'</button>';document.getElementById('discover-view').appendChild(top);
@@ -15,12 +16,12 @@ var sbox=document.createElement('div');sbox.id='drawer-search';sbox.className='d
 /* 高度 */
 function H(){var vh=window.innerHeight,nav=document.querySelector('.bottom-nav'),navTop=nav?nav.getBoundingClientRect().top:vh-100;
   var safeTop=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat'))||0;
-  return {peek:150,half:Math.round(vh*(state.mode==='detail'?.52:.5)),full:vh-12-safeTop,bottomList:Math.max(0,Math.round(vh-navTop+6))};}
+  var bl=Math.max(0,Math.round(vh-navTop+6)),list=state.mode==='list';return {peek:150+(list?bl:0),half:Math.round(vh*(list?.5:.52)),full:vh-12-safeTop,bottomList:bl};}
 function apply(animate){
   var h=H(),height=h[state.snap];
   sheet.style.transition=animate===false?'none':'';sheet.dataset.snap=state.snap;sheet.dataset.mode=state.mode;
   sheet.style.setProperty('--drawer-h',height+'px');
-  sheet.style.setProperty('--drawer-bottom',(state.mode==='detail'?0:h.bottomList)+'px');
+  sheet.style.setProperty('--drawer-bottom','0px');sheet.style.setProperty('--nav-space',(state.mode==='detail'?0:h.bottomList)+'px');
   document.body.classList.toggle('drawer-detail',state.mode==='detail');document.body.classList.toggle('drawer-full',state.snap==='full');
   trackFab();
 }
@@ -114,12 +115,38 @@ document.getElementById('discover-list').addEventListener('click',function(e){va
 map.on('click',function(e){if(state.mode==='detail'&&!(e.originalEvent&&e.originalEvent.target.closest('.discover-map-marker')))closeDetail();});
 /* 原有展开收起改为抽屉 */
 collapseDiscoverSheet=function(){if(state.mode==='list')snapTo('peek');};
-fab.onclick=function(){try{locate();}catch(e){}};
+fab.onclick=function(){window.__cityLabel='';try{locate();}catch(e){}};
 /* 顶部城市与搜索 */
 var cityEl=top.querySelector('.dt-city span');
-function refreshCity(){var c='附近';try{c=detectedCity||(activeDiscoverCity&&activeDiscoverCity!=='附近'?activeDiscoverCity:'附近');}catch(e){}if(cityEl.textContent!==c)cityEl.textContent=c;
+function refreshCity(){var c='附近';try{c=window.__cityLabel||detectedCity||(activeDiscoverCity&&activeDiscoverCity!=='附近'?activeDiscoverCity:'附近');}catch(e){}if(cityEl.textContent!==c)cityEl.textContent=c;
   var n=document.querySelectorAll('#discover-list .discover-row').length,p=sheet.querySelector('.discover-sheet-head p');if(p)p.textContent=n?('共 '+n+' 个地点'):'';placeFab();}
 setInterval(refreshCity,1200);
+
+/* 城市选择 */
+var HOT=['北京','上海','广州','深圳','成都','重庆','杭州','西安','南京','苏州','武汉','长沙','厦门','青岛','大连','沈阳','哈尔滨','天津','郑州','昆明','三亚','桂林','丽江','大理'];
+function gotoCity(name,lat,lng){
+  window.__cityLabel=name;cityEl.textContent=name;window.__discoverRadii=[3000,9000];
+  try{map.easeTo({center:window.MapCoord?MapCoord.toMap(lng,lat):[lng,lat],zoom:11.5,duration:700});}catch(e){}
+  try{loadNearbyPlaces(lat,lng,name);}catch(e){}
+  if(state.mode==='detail')closeDetail();
+}
+function openCitySheet(){
+  var wrap=document.createElement('div');wrap.className='tp-wrap city-wrap';
+  wrap.innerHTML='<div class="tp-backdrop"></div><section class="tp-sheet" role="dialog" aria-label="选择城市"><div class="tp-grip"></div><h3>选择城市</h3><div class="ds-row city-search"><span class="ds-ic">'+ic(I.search,18)+'</span><input id="city-q" type="search" placeholder="搜索城市" autocomplete="off"></div><button type="button" class="city-me">'+ic(I.loc,18)+'<span>我的位置</span></button><div class="city-grid" id="city-grid"></div></section>';
+  document.body.appendChild(wrap);requestAnimationFrame(function(){wrap.classList.add('open');});
+  var grid=wrap.querySelector('#city-grid'),q=wrap.querySelector('#city-q');
+  function close(){wrap.classList.remove('open');setTimeout(function(){wrap.remove();},320);}
+  function draw(){
+    var v=q.value.trim(),all=Object.keys(PoiSource.CITIES),list=v?all.filter(function(c){return c.indexOf(v)>=0;}):HOT;
+    grid.innerHTML=list.map(function(c){return '<button type="button" data-c="'+c+'">'+c+'</button>';}).join('')+(v&&!list.length?'<button type="button" class="city-other" data-q="'+esc(v)+'">搜索 '+esc(v)+'</button>':'');
+    grid.querySelectorAll('[data-c]').forEach(function(b){b.onclick=function(){var c=PoiSource.CITIES[b.dataset.c];close();gotoCity(b.dataset.c,c[0],c[1]);};});
+    var o=grid.querySelector('[data-q]');if(o)o.onclick=async function(){var g=await PoiSource.geocode(o.dataset.q);close();if(g)gotoCity(o.dataset.q,g.lat,g.lng);else toast('没有找到这个城市');};
+  }
+  q.addEventListener('input',draw);draw();
+  wrap.querySelector('.tp-backdrop').onclick=close;
+  wrap.querySelector('.city-me').onclick=function(){close();window.__cityLabel='';try{locate();}catch(e){}};
+}
+top.querySelector('.dt-city').onclick=openCitySheet;
 var sin=document.getElementById('ds-input'),slist=document.getElementById('ds-list'),stimer=0;
 top.querySelector('.dt-search').onclick=function(){sbox.classList.add('open');sin.focus();};
 sbox.querySelector('.ds-cancel').onclick=function(){sbox.classList.remove('open');sin.value='';slist.innerHTML='';sin.blur();};

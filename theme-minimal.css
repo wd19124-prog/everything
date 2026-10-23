@@ -114,3 +114,50 @@ body .discover-view{background:transparent!important;background-image:none!impor
 .mono-black{background:#111!important;background-image:none!important;color:#fff!important;box-shadow:none!important;border-color:#111!important}
 .mono-chip{background:var(--chip)!important;background-image:none!important;color:#111!important;box-shadow:none!important}
 body #confirm-add-trip,body .trip-actions button:last-child{background:#111!important;background-image:none!important;color:#fff!important;box-shadow:none!important}
+
+/* 地图控件 去掉没用的指北针 */
+.maplibregl-ctrl-compass{display:none!important}
+.maplibregl-ctrl-group{border-radius:14px!important;box-shadow:0 4px 18px rgba(0,0,0,.10)!important}
+/* 抽屉铺到页面底部 底部导航区域做模糊衬托 */
+body #discover-sheet{bottom:0!important}
+.drawer-blur{position:absolute;left:0;right:0;bottom:0;height:var(--nav-space,0px);pointer-events:none;z-index:4;-webkit-backdrop-filter:blur(16px) saturate(1.1);backdrop-filter:blur(16px) saturate(1.1);background:linear-gradient(to top,rgba(255,255,255,.88),rgba(255,255,255,.6));-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 38%);mask-image:linear-gradient(to bottom,transparent 0,#000 38%);transition:opacity .25s var(--ease)}
+body #discover-sheet[data-mode=detail] .drawer-blur{opacity:0}
+body #discover-sheet #discover-list{padding-bottom:calc(var(--nav-space,96px) + 16px)!important}
+/* 城市选择 */
+.city-search{margin:4px 0 10px}.city-search input{flex:1;min-width:0;border:0;background:transparent;padding:12px 0;font:inherit;font-size:16px;outline:none}
+.city-me{display:flex;align-items:center;gap:8px;border:0;background:var(--chip);border-radius:14px;padding:11px 14px;font:inherit;font-size:15px;color:#111;margin-bottom:12px}
+.city-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;max-height:46dvh;overflow:auto}
+.city-grid button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:11px 4px;font:inherit;font-size:15px;color:#111}
+.city-grid button:active{transform:scale(.95)}
+.city-grid .city-other{grid-column:1/-1;background:#111;color:#fff;border-color:#111}
+/* 添加按钮任何状态都是纯黑 */
+body #confirm-add-trip,body #confirm-add-trip:hover,body #confirm-add-trip:active,body #confirm-add-trip:disabled,body #confirm-add-trip:not(:disabled){background:#111!important;background-image:none!important;color:#fff!important;box-shadow:none!important;border:0!important}
+body #confirm-add-trip:disabled{opacity:.4}
+/* 我的 三个页面统一 */
+.panel-back,.taste-back,#expenses-back,#my-back,#taste-back,#album-back{width:42px!important;height:42px!important;min-width:42px;padding:0!important;display:inline-flex!important;align-items:center;justify-content:center;border:1px solid #e5e5ea!important;border-radius:14px!important;background:#fff!important;background-image:none!important;color:#111!important;box-shadow:none!important;font-size:0!important;line-height:1;cursor:pointer}
+.panel-back:active{transform:scale(.92)}
+.taste-head,.expense-header-layout,.my-head{display:grid!important;align-items:center;gap:8px;margin:4px 0 12px!important}
+.expense-header-layout,.my-head{grid-template-columns:minmax(0,1fr) 42px!important}
+.my-head h2{margin:0;font-size:26px;display:flex;align-items:center;color:#111}
+.expense-total-box{display:flex!important;align-items:center;justify-content:space-between;gap:10px;height:42px;padding:0 14px!important;border:1px solid #e5e5ea;border-radius:14px;background:#fff!important;box-shadow:none!important}
+.expense-total-box span{font-size:13px;color:#8e8e93}.expense-total-box strong{font-size:16px;color:#111}
+.expense-filters{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 14px}
+.expense-filter{display:block;min-width:0;font-size:11px;color:#8e8e93}
+.expense-filter input,.expense-filter select{width:100%;box-sizing:border-box;margin-top:4px;height:42px;border:1px solid #e5e5ea;border-radius:12px;background:#fff;color:#111;font:inherit;font-size:13px;padding:0 8px}
+/* 相册 */
+.album-all{display:flex;align-items:center;justify-content:space-between;width:100%;border:1px solid #e5e5ea;background:#fff;border-radius:18px;padding:16px 18px;font:inherit;color:#111;margin-bottom:14px;text-align:left}
+.album-all b{display:block;font-size:17px}.album-all small{color:#8e8e93;font-size:13px}
+.album-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.album-city{position:relative;height:112px;border:0;border-radius:20px;background:#f2f2f4 center/cover no-repeat;display:flex;align-items:flex-end;padding:12px 14px;font:inherit;color:#111;text-align:left;overflow:hidden}
+.album-city b{position:relative;z-index:1;font-size:16px}
+.album-city.has-cover::before{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.55),transparent 65%)}
+.album-city.has-cover b{color:#fff}
+.album-count{position:absolute;right:10px;top:10px;z-index:1;min-width:24px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.92);color:#111;font-size:12px;font-weight:600;text-align:center}
+.album-empty{display:flex;flex-direction:column;align-items:center;gap:8px;padding:56px 24px;color:#8e8e93;text-align:center}
+.album-empty b{font-size:17px;color:#111}.album-empty small{font-size:13px;line-height:1.6}
+.memory-photos{display:grid!important;grid-template-columns:repeat(3,1fr);gap:8px!important;padding:0!important;border-radius:0!important;background:none!important;box-shadow:none!important}
+.memory-photos img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px}
+.expense-filters select{overflow:hidden}
+.expense-choice select[multiple]{height:42px;padding:10px 8px;overflow:hidden;appearance:none;-webkit-appearance:none}
+.expense-summary{background:#fff;border:1px solid #e5e5ea;box-shadow:none}
+.expense-day{border-radius:12px}
