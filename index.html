@@ -774,7 +774,7 @@ window.__bootFailed=function(){
     enrichRestoredPlaces();renderNext();renderItinerary();updatePlanCopy();renderDiscover('all');showView('next');
     if('serviceWorker' in navigator){window.addEventListener('load',async()=>{try{const registration=await navigator.serviceWorker.register('./sw.js');navigator.serviceWorker.addEventListener('controllerchange',()=>{if(!window.__swReloaded){window.__swReloaded=true;window.location.reload();}});await registration.update();if(registration.waiting)registration.waiting.postMessage({type:'SKIP_WAITING'});}catch(e){}});}
   </script>
-  <script>if(!window.__SAFE){['poi-source','amap-config','amap-kit','pulse-button','route-map','discover-fast','planner-plus','place-info','tips','drawer'].forEach(function(n){document.write('<script src="./'+n+'.js"><\/script>');});}</script>
+  <script>if(!window.__SAFE){['poi-source','amap-config','amap-kit','pulse-button','route-map','discover-fast','planner-plus','place-info','tips','drawer','mono'].forEach(function(n){document.write('<script src="./'+n+'.js"><\/script>');});}</script>
   <script>setTimeout(function(){var v=document.querySelector('.app-view.active'),ok=v&&String(v.innerText||'').trim().length>0&&typeof showView==='function';if(!ok&&window.__bootFailed)window.__bootFailed();else try{sessionStorage.removeItem('sy-recovered');}catch(x){}},2600);</script>
 </body>
 </html>

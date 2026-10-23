@@ -105,3 +105,12 @@ body .app-view h3,body .sync-box h3,body .detail-card h3{color:#111}
 body .date-card{background:var(--chip)!important;background-image:none!important;color:#111!important}
 body .day-picker button .day-num,body .day-picker button strong{color:inherit}
 body .location-label,body .city-line{color:#8e8e93}
+
+/* 发现页保持地图可见 搜索框可输入 */
+body .discover-view{background:transparent!important;background-image:none!important}
+.drawer-search,.drawer-search *{pointer-events:auto}
+.ds-row input{-webkit-appearance:none;appearance:none;background:transparent!important;border:0;box-shadow:none;border-radius:0}
+.ds-row input::-webkit-search-cancel-button{display:none}
+.mono-black{background:#111!important;background-image:none!important;color:#fff!important;box-shadow:none!important;border-color:#111!important}
+.mono-chip{background:var(--chip)!important;background-image:none!important;color:#111!important;box-shadow:none!important}
+body #confirm-add-trip,body .trip-actions button:last-child{background:#111!important;background-image:none!important;color:#fff!important;box-shadow:none!important}

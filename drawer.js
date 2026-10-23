@@ -121,7 +121,7 @@ function refreshCity(){var c='附近';try{c=detectedCity||(activeDiscoverCity&&a
   var n=document.querySelectorAll('#discover-list .discover-row').length,p=sheet.querySelector('.discover-sheet-head p');if(p)p.textContent=n?('共 '+n+' 个地点'):'';placeFab();}
 setInterval(refreshCity,1200);
 var sin=document.getElementById('ds-input'),slist=document.getElementById('ds-list'),stimer=0;
-top.querySelector('.dt-search').onclick=function(){sbox.classList.add('open');setTimeout(function(){sin.focus();},60);};
+top.querySelector('.dt-search').onclick=function(){sbox.classList.add('open');sin.focus();};
 sbox.querySelector('.ds-cancel').onclick=function(){sbox.classList.remove('open');sin.value='';slist.innerHTML='';sin.blur();};
 async function runSearch(q){
   var items=[];

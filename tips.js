@@ -50,6 +50,12 @@ function convert(root){
     ic.querySelectorAll('.app-note,.lodging-tip').forEach(function(n){if(sp)merge(sp,txt(n),'help');n.remove();});
     ic.querySelectorAll('.sync-box p').forEach(function(p){var h=p.parentNode.querySelector('h3,b,strong');if(h)merge(h,txt(p),'help');else p.parentNode.insertBefore(make(txt(p),'help'),p);p.remove();});
   }
+  /* 弹出面板里的说明文字 */
+  document.querySelectorAll('.trip-sheet > p,.planner-sheet > p').forEach(function(p){
+    if(p.dataset.tipped||p.closest('.tip-pop'))return;var tx=txt(p);if(tx.length<8)return;
+    var h=p.previousElementSibling;if(!h||!/^H[1-4]$/.test(h.tagName)){h=p.parentNode.querySelector('h1,h2,h3,h4');}
+    if(h){merge(h,tx,'help');p.remove();}
+  });
   /* 其他常见提示类元素 */
   (root.querySelectorAll?root.querySelectorAll('.planner-hint,.sheet-hint,.form-hint,.field-hint,.hint,.sheet-note,.planner-note,[data-explain]'):[]).forEach(function(n){
     if(n.dataset.tipped||n.closest('.tip-pop'))return;var t=txt(n);if(t.length<6)return;n.parentNode.insertBefore(make(t,'help'),n);n.style.display='none';done(n);
